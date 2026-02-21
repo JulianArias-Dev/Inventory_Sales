@@ -11,6 +11,14 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Server=db;Database=master;User=sa;Password=Unicesar+2026;TrustServerCertificate=True;
 
+  frontend:
+    build: ./InventorySalesFront
+    container_name: InventorySalesfrontend
+    ports: 
+      - "5173:5173"
+    depends_on:
+      - api
+
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
