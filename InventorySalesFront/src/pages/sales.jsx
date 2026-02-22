@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SaleDetailsModal from "../components/SaleDetailsModal";
 import SalesTable from "../components/SalesTable";
+import "../styles/sales.css";
 
 const mockSales = [
     {
@@ -26,7 +27,7 @@ function Sales() {
     const [selectedSale, setSelectedSale] = useState(null);
 
     return (
-        <div className="p-4" style={{ backgroundColor: "#F3F4F6", minHeight: "100vh" }}>
+        <div className="sales-container">
             <h2 className="mb-4">Ventas</h2>
 
             <SalesTable sales={mockSales} onView={setSelectedSale} />
@@ -40,5 +41,4 @@ function Sales() {
         </div>
     );
 }
-
 export default Sales;

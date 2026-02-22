@@ -1,0 +1,75 @@
+/* Fondo general */
+.sales-container {
+    background-color: #F3F4F6;
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+/* Tabla */
+.sales-table thead {
+    background-color: #1F2937;
+    color: white;
+}
+
+/* Botón ver */
+.btn-view {
+    background-color: #2563EB;
+    color: white;
+}
+
+.btn-view:hover {
+    opacity: 0.9;
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+}
+
+/* Modal card */
+.modal-card {
+    width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 10px;
+}
+
+/* Modal header */
+.modal-header-custom {
+    background-color: #1F2937;
+    color: white;
+    padding: 1rem;
+}
+
+/* Total general */
+.total-general {
+    color: #10B981;
+}
+
+/* Botón cerrar */
+.btn-close-modal {
+    background-color: #EF4444;
+    color: white;
+    border: 2px solid #EF4444;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+}
+
+.btn-close-modal:hover {
+    background-color: white;
+    color: #EF4444;
+    box-shadow: 0 6px 12px rgba(0.4, 0.4, 0.4, 0.4);
+    transition: all 0.3s ease-in-out;
+}
