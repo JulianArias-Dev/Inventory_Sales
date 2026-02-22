@@ -1,6 +1,5 @@
 ﻿using API.Models;
 using API.Repository;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Services
 {

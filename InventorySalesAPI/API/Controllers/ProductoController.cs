@@ -1,8 +1,5 @@
-﻿using API.Data;
-using API.Models;
-using Microsoft.AspNetCore.Http;
+﻿using API.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using API.Services;
 
 namespace API.Controllers
@@ -11,7 +8,6 @@ namespace API.Controllers
 	[ApiController]
 	public class ProductoController : ControllerBase
 	{
-		//private readonly AppDbContext _context;
 		private readonly ProductService _service;
 
 		public ProductoController(ProductService service)

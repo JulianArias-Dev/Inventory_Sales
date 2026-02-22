@@ -7,10 +7,7 @@ namespace API.Repository
 {
 	public class ProductRep : Repo
 	{
-		public ProductRep(AppDbContext context) : base(context)
-		{ 
-			
-		}
+		public ProductRep(AppDbContext context) : base(context) { }
 
 		public async Task<List<Producto>> GetAllAsync()
 		{
@@ -39,6 +36,7 @@ namespace API.Repository
 
 			existingProduct.Name = updatedProducto.Name;
 			existingProduct.Price = updatedProducto.Price;
+			existingProduct.Stock = updatedProducto.Stock;
 
 			await _context.SaveChangesAsync();
 

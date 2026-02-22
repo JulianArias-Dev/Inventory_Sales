@@ -1,8 +1,7 @@
 ﻿using API.Data;
 using API.Models;
-using Microsoft.AspNetCore.Http;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -10,35 +9,65 @@ namespace API.Controllers
 	[ApiController]
 	public class CategoriaController : ControllerBase
 	{
-		private readonly AppDbContext _context;
+		private readonly CategoryServices _services;
 
-		public CategoriaController(AppDbContext context)
+		public CategoriaController(AppDbContext context, CategoryServices categoryServices)
 		{
-			_context = context;
+			_services = categoryServices;
 		}
 
 		[HttpGet]
 		public async Task<IActionResult> GetCategorias()
 		{
-			var categorias = await _context.Categorias.ToListAsync();
+			var categorias = await _services.GetAsync();
 			return Ok(categorias);
 		}
+
+		[HttpGet("{categoryId}")]
+		public async Task<ActionResult<Categoria>> GetCategoryById(int categoryId) { 
+			var category = await _services.GetOneAsync(categoryId);
+
+			if(category==null)
+				return NotFound();
+
+			return Ok(category);
+		}
+
 
 		[HttpPost]
 		public async Task<ActionResult<Categoria>> CreateCategoria([FromBody] Categoria categoria)
 		{
-			if (categoria == null || string.IsNullOrWhiteSpace(categoria.Name))
-			{
-				return BadRequest();
-			}
+			if (!ModelState.IsValid)
+				return BadRequest(ModelState);
 
-			await _context.Categorias.AddAsync(categoria);
-			await _context.SaveChangesAsync();
+			var newCategory = await _services.Create(categoria);
 
 			return CreatedAtAction(
-				nameof(GetCategorias),
+				nameof(GetCategoryById),
 				new { id = categoria.Id },
 				categoria);
+		}
+
+		[HttpDelete("{categoryId}")]
+		public async Task<IActionResult> DeleteCategory(int categoryId)
+		{
+			var deleted = await _services.Delete(categoryId);
+
+			if (!deleted)
+				return NotFound();
+
+			return NoContent();
+		}
+
+		[HttpPut("{categoryId}")]
+		public async Task<IActionResult> UpdateCategory(int catId, Categoria categoria)
+		{
+			var updated = await _services.Update(catId, categoria);
+
+			if (updated==null)
+				return NotFound();
+
+			return Ok(updated);
 		}
 
 	}
