@@ -1,44 +1,31 @@
-import { useState } from "react";
-import SaleDetailsModal from "../components/SaleDetailsModal";
-import SalesTable from "../components/SalesTable";
-import "../styles/sales.css";
+import SaleForm from "./SaleForm";
 
-const mockSales = [
-    {
-        id: "F001",
-        cliente: "Juan Pérez",
-        total: 150000,
-        productos: [
-            { productId: "P01", cantidad: 2, unitPrice: 30000 },
-            { productId: "P02", cantidad: 3, unitPrice: 30000 }
-        ]
-    },
-    {
-        id: "F002",
-        cliente: "María Gómez",
-        total: 80000,
-        productos: [
-            { productId: "P03", cantidad: 1, unitPrice: 80000 }
-        ]
-    }
-];
-
-function Sales() {
-    const [selectedSale, setSelectedSale] = useState(null);
+function SaleFormModal({ show, onClose, onSubmit }) {
+    if (!show) return null;
 
     return (
-        <div className="sales-container">
-            <h2 className="mb-4">Ventas</h2>
+        <div className="modal-overlay">
+            <div
+                className="card shadow-lg modal-card"
+                style={{ width: "800px" }}
+            >
+                <div className="modal-header-custom d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0">Registrar Venta</h5>
 
-            <SalesTable sales={mockSales} onView={setSelectedSale} />
+                    <button
+                        className="btn btn-close-modal"
+                        onClick={onClose}
+                    >
+                        Cerrar
+                    </button>
+                </div>
 
-            {selectedSale && (
-                <SaleDetailsModal
-                    sale={selectedSale}
-                    onClose={() => setSelectedSale(null)}
-                />
-            )}
+                <div className="p-4">
+                    <SaleForm onSubmit={onSubmit} />
+                </div>
+            </div>
         </div>
     );
 }
-export default Sales;
+
+export default SaleFormModal;
