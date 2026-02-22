@@ -10,6 +10,9 @@ namespace API.Data
 		}
 		
 		public DbSet<Categoria> Categorias { get; set; }
+		public DbSet<Producto> Productos { get; set; }
+		public DbSet<Venta> Ventas { get; set; }
+		public DbSet<VentaProducto> VentaProductos { get; set; }
 		
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{

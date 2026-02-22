@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using API.Data;
+using API.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using API.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -16,22 +18,27 @@ namespace API.Controllers
 		}
 
 		[HttpGet]
-		public IActionResult GetCategorias()
+		public async Task<IActionResult> GetCategorias()
 		{
-			var categorias = _context.Categorias.ToList();
+			var categorias = await _context.Categorias.ToListAsync();
 			return Ok(categorias);
 		}
 
 		[HttpPost]
-		public IActionResult CreateCategoria([FromBody] Models.Categoria categoria)
+		public async Task<ActionResult<Categoria>> CreateCategoria([FromBody] Categoria categoria)
 		{
-			if (categoria == null || string.IsNullOrEmpty(categoria.Name))
+			if (categoria == null || string.IsNullOrWhiteSpace(categoria.Name))
 			{
-				return BadRequest("O nome da categoria é obrigatório.");
+				return BadRequest();
 			}
-			_context.Categorias.Add(categoria);
-			_context.SaveChanges();
-			return CreatedAtAction(nameof(GetCategorias), new { id = categoria.Id }, categoria);
+
+			await _context.Categorias.AddAsync(categoria);
+			await _context.SaveChangesAsync();
+
+			return CreatedAtAction(
+				nameof(GetCategorias),
+				new { id = categoria.Id },
+				categoria);
 		}
 
 	}
