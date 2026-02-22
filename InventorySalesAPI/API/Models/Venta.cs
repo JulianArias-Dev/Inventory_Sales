@@ -7,6 +7,6 @@
 		public decimal TotalAmount { get; set; }
 		public string CustomerName { get; set; }
 
-		public ICollection<VentaProducto> VentaProductos { get; set; }
+		public ICollection<VentaProducto> VentaProductos { get; set; } = new List<VentaProducto>();
 	}
 }
