@@ -1,6 +1,6 @@
 import { useState } from "react";
-import SalesTable from "./Components/SalesTable";
-import SaleDetailsModal from "./Components/SaleDetailsModal";
+import SalesTable from "../components/SalesTable";
+import SaleDetailsModal from "../Components/SaleDetailsModal";
 
 const mockSales = [
     {
