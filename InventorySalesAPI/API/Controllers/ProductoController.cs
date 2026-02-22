@@ -22,14 +22,14 @@ namespace API.Controllers
 		[HttpGet]
 		public async Task<ActionResult> GetProducts()
 		{
-			var productos = await _service.GetProductsAsync();
+			var productos = await _service.GetAsync();
 			return Ok(productos);
 		}
 
 		[HttpGet("{productId}")]
 		public async Task<ActionResult<Producto>> GetProductById(int productId)
 		{
-			var product = await _service.GetOneProductAsync(productId);
+			var product = await _service.GetOneAsync(productId);
 
 			if (product == null)
 				return NotFound();
@@ -40,34 +40,25 @@ namespace API.Controllers
 		[HttpPost]
 		public async Task<ActionResult<Producto>> CreateProduct([FromBody] Producto producto)
 		{
-			if (producto == null)
-				return BadRequest();
+			if (!ModelState.IsValid)
+				return BadRequest(ModelState);
 
-			await _context.Productos.AddAsync(producto);
-			await _context.SaveChangesAsync();
+			var newProduct = await _service.Create(producto);
 
 			return CreatedAtAction(
-				nameof(GetProductById),
-				new { productId = producto.Id },
-				producto);
+				nameof(GetProductById),           
+				new { id = newProduct.Id },
+				newProduct
+			);
 		}
 
 		[HttpDelete("{productId}")]
 		public async Task<IActionResult> DeleteProduct(int productId)
 		{
-			var product = await _context.Productos.FindAsync(productId);
+			var deleted = await _service.Delete(productId);
 
-			if (product == null)
+			if (!deleted)
 				return NotFound();
-
-			var hasRelation = await _context.VentaProductos
-				.AnyAsync(v => v.ProductoId == productId);
-
-			if (hasRelation)
-				return Conflict("No se puede eliminar el producto porque está asociado a una venta.");
-
-			_context.Productos.Remove(product);
-			await _context.SaveChangesAsync();
 
 			return NoContent();
 		}
@@ -75,24 +66,12 @@ namespace API.Controllers
 		[HttpPut("{productId}")]
 		public async Task<IActionResult> UpdateProduct(int productId, Producto producto)
 		{
-			if (productId != producto.Id)
-				return BadRequest();
+			var updated = await _service.Update(productId, producto);
 
-			_context.Entry(producto).State = EntityState.Modified;
+			if (updated == null)
+				return NotFound();
 
-			try
-			{
-				await _context.SaveChangesAsync();
-			}
-			catch (DbUpdateConcurrencyException)
-			{
-				if (!await _context.Productos.AnyAsync(p => p.Id == productId))
-					return NotFound();
-				else
-					throw;
-			}
-
-			return NoContent();
+			return Ok(updated);
 		}
 
 

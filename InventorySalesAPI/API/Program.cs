@@ -10,6 +10,8 @@ builder.Services.AddDbContext<AppDbContext>(
 	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+builder.Services.AddProblemDetails();
+
 // Build Own Services
 builder.Services.AddScoped<ProductRep>();
 builder.Services.AddScoped<ProductService>();
@@ -31,6 +33,15 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+app.UseExceptionHandler("/error");
+
+app.Map("/error", (HttpContext context) =>
+{
+	return Results.Problem(
+		title: "An unexpected error occurred.",
+		statusCode: 500
+	);
+});
 
 app.UseAuthorization();
 
