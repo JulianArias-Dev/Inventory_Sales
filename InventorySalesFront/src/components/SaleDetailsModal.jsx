@@ -1,69 +1,56 @@
-function SaleDetailsModal({ sale, onClose }) {
+import { useEffect, useState } from "react";
+import { getVentaById } from "../services/ventasService";
 
-    const calculateProductTotal = (producto) => {
-        return producto.cantidad * producto.unitPrice;
-    };
+const SalesDetailsModal = ({ ventaId, onClose }) => {
+    const [venta, setVenta] = useState(null);
+
+    useEffect(() => {
+        const loadVenta = async () => {
+            try {
+                const data = await getVentaById(ventaId);
+                setVenta(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        loadVenta();
+    }, [ventaId]);
+
+    if (!venta) return <div>Cargando...</div>;
 
     return (
-        <div className="modal-overlay">
-            <div className="card shadow-lg modal-card">
+        <div className="modal">
+            <h3>Factura #{venta.id}</h3>
+            <p>Cliente: {venta.customerName}</p>
+            <p>Fecha: {new Date(venta.date).toLocaleString()}</p>
 
-                {/* Header */}
-                <div className="modal-header-custom">
-                    <h5 className="mb-0">Factura #{sale.id}</h5>
-                </div>
+            <table border="1" width="100%">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {venta.productos.map((p, index) => (
+                        <tr key={index}>
+                            <td>{p.productoNombre}</td>
+                            <td>{p.cantidad}</td>
+                            <td>${p.precioUnitario}</td>
+                            <td>${p.cantidad * p.precioUnitario}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
 
-                {/* Body */}
-                <div className="p-4">
+            <h4>Total: ${venta.totalAmount}</h4>
 
-                    <p>
-                        <strong>Cliente:</strong> {sale.cliente}
-                    </p>
-
-                    <hr />
-
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>P. Unitario</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sale.productos.map((producto, index) => (
-                                <tr key={index}>
-                                    <td>{producto.productId}</td>
-                                    <td>{producto.cantidad}</td>
-                                    <td>${producto.unitPrice.toLocaleString()}</td>
-                                    <td>
-                                        ${calculateProductTotal(producto).toLocaleString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    <hr />
-
-                    <h5 className="text-end total-general">
-                        Total General: ${sale.total.toLocaleString()}
-                    </h5>
-
-                    <div className="text-end mt-3">
-                        <button
-                            className="btn btn-close-modal"
-                            onClick={onClose}
-                        >
-                            Cerrar
-                        </button>
-                    </div>
-
-                </div>
-            </div>
+            <button onClick={onClose}>Cerrar</button>
         </div>
     );
-}
+};
 
-export default SaleDetailsModal;
+export default SalesDetailsModal;
