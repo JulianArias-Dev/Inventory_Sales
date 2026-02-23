@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import * as productService from '../services/productService';
 import * as salesService from '../services/salesService';
+import SaleConfirmModal from './SaleConfirmModal';
 import '../styles/saleFormModal.css';
 
 const SaleFormModal = ({ onClose, onSuccess }) => {
-    const [step, setStep] = useState('form'); // 'form' o 'confirm'
+    const [step, setStep] = useState('form');
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Estado del formulario
     const [formData, setFormData] = useState({
         cliente: '',
-        productos: [] // { productId, nombre, precio, cantidad, subtotal }
+        productos: []
     });
 
-    // Estado para nuevo producto a agregar
     const [nuevoProducto, setNuevoProducto] = useState({
         productId: '',
         cantidad: 1,
@@ -33,7 +32,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             setProductos(data);
         } catch (error) {
             setError('Error al cargar los productos');
-            console.error(error);
         }
     };
 
@@ -77,14 +75,12 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             return;
         }
 
-        // Verificar stock disponible
         const productoEnStock = productos.find(p => p.id === nuevoProducto.productId);
         if (productoEnStock && productoEnStock.stock < nuevoProducto.cantidad) {
             setError(`Stock insuficiente. Stock disponible: ${productoEnStock.stock}`);
             return;
         }
 
-        // Verificar si el producto ya está en la lista
         const productoExistente = formData.productos.find(p => p.productId === nuevoProducto.productId);
         if (productoExistente) {
             const nuevaCantidad = productoExistente.cantidad + nuevoProducto.cantidad;
@@ -93,7 +89,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                 return;
             }
 
-            // Actualizar cantidad del producto existente
             const productosActualizados = formData.productos.map(p => {
                 if (p.productId === nuevoProducto.productId) {
                     const nuevaCantidad = p.cantidad + nuevoProducto.cantidad;
@@ -111,7 +106,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                 productos: productosActualizados
             });
         } else {
-            // Agregar nuevo producto
             const subtotal = nuevoProducto.precio * nuevoProducto.cantidad;
             setFormData({
                 ...formData,
@@ -125,7 +119,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             });
         }
 
-        // Resetear selección
         setNuevoProducto({
             productId: '',
             cantidad: 1,
@@ -160,7 +153,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             return;
         }
 
-        // Ir al paso de confirmación
         setStep('confirm');
         setError('');
     };
@@ -169,7 +161,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
         try {
             setLoading(true);
 
-            // Preparar datos para el endpoint
             const ventaData = {
                 cliente: formData.cliente,
                 productos: formData.productos.map(p => ({
@@ -181,18 +172,13 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             await salesService.createVenta(ventaData);
 
             setStep('form');
-            onSuccess(); // Recargar lista de ventas
-            onClose(); // Cerrar modal
+            onSuccess();
+            onClose();
         } catch (error) {
             setError('Error al registrar la venta');
-            console.error(error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleEdit = () => {
-        setStep('form');
     };
 
     const handleCancel = () => {
@@ -211,112 +197,24 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
     const total = calcularTotal();
 
-    // Modal de confirmación
     if (step === 'confirm') {
         return (
-            <div className="sale-modal-overlay" onClick={handleCancel}>
-                <div className="sale-modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                        <h5 className="modal-title">
-                            <i className="bi bi-check-circle me-2"></i>
-                            Confirmar Venta
-                        </h5>
-                        <button type="button" className="btn-close" onClick={handleCancel}></button>
-                    </div>
-
-                    <div className="modal-body">
-                        {error && (
-                            <div className="custom-alert custom-alert-danger">
-                                <i className="bi bi-exclamation-triangle-fill"></i>
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="sale-summary">
-                            <div className="summary-section">
-                                <h6><i className="bi bi-person me-2"></i>Cliente</h6>
-                                <p className="summary-value">{formData.cliente}</p>
-                            </div>
-
-                            <div className="summary-section">
-                                <h6><i className="bi bi-box me-2"></i>Productos</h6>
-                                <div className="products-summary">
-                                    {formData.productos.map((producto, index) => (
-                                        <div key={index} className="product-summary-item">
-                                            <div className="product-info">
-                                                <span className="product-name">{producto.nombre}</span>
-                                                <span className="product-detail">
-                                                    {producto.cantidad} x ${producto.precio.toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <span className="product-subtotal">
-                                                ${producto.subtotal.toFixed(2)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="summary-total">
-                                <div className="total-row">
-                                    <span>Subtotal:</span>
-                                    <span>${total.toFixed(2)}</span>
-                                </div>
-                                <div className="total-row grand-total">
-                                    <span>Total:</span>
-                                    <span>${total.toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            <div className="confirm-info">
-                                <i className="bi bi-info-circle me-2"></i>
-                                Al confirmar, se registrará la venta y se actualizará el stock automáticamente.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="modal-footer">
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={handleEdit}
-                        >
-                            <i className="bi bi-pencil me-2"></i>
-                            Editar Venta
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={handleCancel}
-                        >
-                            <i className="bi bi-x-lg me-2"></i>
-                            Cancelar
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={handleConfirm}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <span className="spinner-border spinner-border-sm me-2"></span>
-                                    Registrando...
-                                </>
-                            ) : (
-                                <>
-                                    <i className="bi bi-check-lg me-2"></i>
-                                    Confirmar Venta
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <SaleConfirmModal
+                show={true}
+                onClose={handleCancel}
+                onConfirm={handleConfirm}
+                onEdit={() => setStep('form')}
+                data={{
+                    cliente: formData.cliente,
+                    productos: formData.productos,
+                    total
+                }}
+                loading={loading}
+                error={error}
+            />
         );
     }
 
-    // Modal del formulario
     return (
         <div className="sale-modal-overlay" onClick={handleCancel}>
             <div className="sale-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -337,7 +235,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                             </div>
                         )}
 
-                        {/* Datos del cliente */}
                         <div className="form-section">
                             <h6 className="section-title">
                                 <i className="bi bi-person me-2"></i>
@@ -356,7 +253,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* Agregar productos */}
                         <div className="form-section">
                             <h6 className="section-title">
                                 <i className="bi bi-box me-2"></i>
@@ -405,7 +301,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                 )}
                             </div>
 
-                            {/* Lista de productos agregados */}
                             {formData.productos.length > 0 && (
                                 <div className="selected-products mt-3">
                                     <h6 className="mb-2">Productos seleccionados:</h6>
@@ -438,7 +333,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                             )}
                         </div>
 
-                        {/* Resumen */}
                         {formData.productos.length > 0 && (
                             <div className="form-section summary-section">
                                 <div className="summary-row">
