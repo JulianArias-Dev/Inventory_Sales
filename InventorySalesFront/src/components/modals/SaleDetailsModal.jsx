@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import salesService from "../services/salesService";
+import salesService from "../../services/salesService";
 import "../styles/salesDetailsModal.css";
 
 const SalesDetailsModal = ({ ventaId, onClose }) => {

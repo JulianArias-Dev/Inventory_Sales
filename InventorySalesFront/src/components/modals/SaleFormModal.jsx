@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import * as productService from '../services/productService';
-import * as salesService from '../services/salesService';
+import * as productService from '../../services/productService';
+import * as salesService from '../../services/salesService';
 import SaleConfirmModal from './SaleConfirmModal';
 import '../styles/SaleFormModal.css';
 

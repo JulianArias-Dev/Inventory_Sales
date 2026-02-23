@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Alert } from 'react-bootstrap';
 import salesService from '../services/salesService';
-import SalesTable from '../components/SalesTable';
-import SaleFormModal from '../components/SaleFormModal';
-import SalesDetailsModal from '../components/SaleDetailsModal';
+import SalesTable from '../components/tables/SalesTable';
+import SaleFormModal from '../components/modals/SaleFormModal';
+import SalesDetailsModal from '../components/modals/SaleDetailsModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/sales.css';
 
