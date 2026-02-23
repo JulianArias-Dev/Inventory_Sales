@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { productoService } from '../services/productService';
+import '../styles/products.css';
 
 const Products = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('crear');
+  const [modalType, setModalType] = useState('crear'); // 'crear', 'editar', 'stock'
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -141,43 +142,73 @@ const Products = () => {
   };
 
   const getStockBadge = (stock) => {
-    if (stock === 0) return <span className="badge bg-danger">Agotado</span>;
-    if (stock < 10) return <span className="badge bg-warning text-dark">Bajo stock</span>;
-    return <span className="badge bg-success">Disponible</span>;
+    if (stock === 0) return <span className="stock-badge agotado">Agotado</span>;
+    if (stock < 10) return <span className="stock-badge low">Bajo stock</span>;
+    return <span className="stock-badge available">Disponible</span>;
   };
+
+  const getProductIcon = (categoria) => {
+    const iconos = {
+      'Electrónica': 'bi-tv',
+      'Ropa': 'bi-hanger',
+      'Hogar': 'bi-house-heart',
+      'Deportes': 'bi-trophy'
+    };
+    return iconos[categoria.nombre] || 'bi-box';
+  };
+
+  const totalProductos = productos.length;
+  const stockTotal = productos.reduce((acc, p) => acc + p.stock, 0);
+  const productosBajoStock = productos.filter(p => p.stock < 10 && p.stock > 0).length;
+  const productosAgotados = productos.filter(p => p.stock === 0).length;
 
   const productosFiltrados = filtrarProductos();
 
-  // Modal para crear/editar producto
+  // Modal para Crear/Editar Producto
   const renderProductoModal = () => {
     if (!showModal || modalType === 'stock') return null;
     
     return (
-      <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
+      <div className="modal fade show custom-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">{modalType === 'crear' ? 'Nuevo Producto' : 'Editar Producto'}</h5>
+              <h5 className="modal-title">
+                <i className={`bi ${modalType === 'crear' ? 'bi-plus-circle' : 'bi-pencil-square'} me-2`}></i>
+                {modalType === 'crear' ? 'Nuevo Producto' : 'Editar Producto'}
+              </h5>
               <button type="button" className="btn-close" onClick={handleCloseModal}></button>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="custom-form">
               <div className="modal-body">
-                {error && <div className="alert alert-danger">{error}</div>}
+                {error && (
+                  <div className="custom-alert custom-alert-danger">
+                    <i className="bi bi-exclamation-triangle-fill"></i>
+                    {error}
+                  </div>
+                )}
                 
                 <div className="mb-3">
-                  <label className="form-label">Nombre del Producto</label>
+                  <label className="form-label">
+                    <i className="bi bi-tag me-2"></i>
+                    Nombre del Producto
+                  </label>
                   <input
                     type="text"
                     className="form-control"
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
+                    placeholder="Ej: Smart TV 55, Laptop Gaming..."
                     required
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Categoría</label>
+                  <label className="form-label">
+                    <i className="bi bi-folder me-2"></i>
+                    Categoría
+                  </label>
                   <select
                     className="form-select"
                     name="categoriaId"
@@ -195,7 +226,10 @@ const Products = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Precio</label>
+                  <label className="form-label">
+                    <i className="bi bi-currency-dollar me-2"></i>
+                    Precio
+                  </label>
                   <div className="input-group">
                     <span className="input-group-text">$</span>
                     <input
@@ -206,13 +240,17 @@ const Products = () => {
                       min="0"
                       value={formData.precio}
                       onChange={handleInputChange}
+                      placeholder="0.00"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Stock Inicial</label>
+                  <label className="form-label">
+                    <i className="bi bi-box-seam me-2"></i>
+                    Stock Inicial
+                  </label>
                   <input
                     type="number"
                     className="form-control"
@@ -220,15 +258,18 @@ const Products = () => {
                     min="0"
                     value={formData.stock}
                     onChange={handleInputChange}
+                    placeholder="0"
                     required
                   />
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                  <i className="bi bi-x-lg me-2"></i>
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
+                  <i className={`bi ${modalType === 'crear' ? 'bi-save' : 'bi-check-lg'} me-2`}></i>
                   {modalType === 'crear' ? 'Crear Producto' : 'Guardar Cambios'}
                 </button>
               </div>
@@ -239,28 +280,52 @@ const Products = () => {
     );
   };
 
-  // Modal para modificar stock
+  // Modal para Modificar Stock
   const renderStockModal = () => {
     if (!showModal || modalType !== 'stock' || !selectedProducto) return null;
     
     return (
-      <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
+      <div className="modal fade show custom-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Modificar Stock</h5>
+              <h5 className="modal-title">
+                <i className="bi bi-arrow-up-down me-2"></i>
+                Modificar Stock
+              </h5>
               <button type="button" className="btn-close" onClick={handleCloseModal}></button>
             </div>
             <div className="modal-body">
-              {error && <div className="alert alert-danger">{error}</div>}
+              {error && (
+                <div className="custom-alert custom-alert-danger">
+                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  {error}
+                </div>
+              )}
               
-              <p><strong>Producto:</strong> {selectedProducto.nombre}</p>
-              <p><strong>Stock actual:</strong> {selectedProducto.stock} unidades</p>
+              <div className="product-info mb-4 p-3 bg-light rounded">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="product-icon">
+                    <i className={`bi ${getProductIcon(selectedProducto.categoria)}`}></i>
+                  </div>
+                  <div>
+                    <h6 className="mb-1">{selectedProducto.nombre}</h6>
+                    <p className="mb-0 text-muted">
+                      <i className="bi bi-folder me-1"></i>
+                      {selectedProducto.categoria.nombre}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <strong>Stock actual:</strong> 
+                  <span className="ms-2 badge bg-info">{selectedProducto.stock} unidades</span>
+                </div>
+              </div>
 
               <div className="mb-3">
                 <label className="form-label">Operación</label>
-                <div>
-                  <div className="form-check form-check-inline">
+                <div className="d-flex gap-3">
+                  <div className="form-check">
                     <input
                       className="form-check-input"
                       type="radio"
@@ -268,10 +333,14 @@ const Products = () => {
                       value="aumentar"
                       checked={stockOperation === 'aumentar'}
                       onChange={(e) => setStockOperation(e.target.value)}
+                      id="aumentar"
                     />
-                    <label className="form-check-label">Aumentar</label>
+                    <label className="form-check-label" htmlFor="aumentar">
+                      <i className="bi bi-arrow-up-circle-fill text-success me-1"></i>
+                      Aumentar
+                    </label>
                   </div>
-                  <div className="form-check form-check-inline">
+                  <div className="form-check">
                     <input
                       className="form-check-input"
                       type="radio"
@@ -279,8 +348,12 @@ const Products = () => {
                       value="disminuir"
                       checked={stockOperation === 'disminuir'}
                       onChange={(e) => setStockOperation(e.target.value)}
+                      id="disminuir"
                     />
-                    <label className="form-check-label">Disminuir</label>
+                    <label className="form-check-label" htmlFor="disminuir">
+                      <i className="bi bi-arrow-down-circle-fill text-danger me-1"></i>
+                      Disminuir
+                    </label>
                   </div>
                 </div>
               </div>
@@ -298,14 +371,16 @@ const Products = () => {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                <i className="bi bi-x-lg me-2"></i>
                 Cancelar
               </button>
               <button 
                 type="button" 
-                className="btn btn-primary" 
+                className="btn btn-primary"
                 onClick={handleModificarStock}
                 disabled={!stockCantidad || stockCantidad < 1}
               >
+                <i className="bi bi-check-lg me-2"></i>
                 Confirmar
               </button>
             </div>
@@ -316,109 +391,199 @@ const Products = () => {
   };
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gestión de Productos</h2>
-        <button className="btn btn-primary" onClick={() => handleShowModal('crear')}>
-          <i className="bi bi-plus me-2"></i>Nuevo Producto
-        </button>
-      </div>
-
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          {error}
-          <button type="button" className="btn-close" onClick={() => setError('')}></button>
-        </div>
-      )}
-      
-      {success && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          {success}
-          <button type="button" className="btn-close" onClick={() => setSuccess('')}></button>
-        </div>
-      )}
-
-      <div className="mb-4">
-        <div className="input-group">
-          <span className="input-group-text">
-            <i className="bi bi-search"></i>
-          </span>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Buscar por nombre o categoría..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <div className="products-container">
+      <div className="page-header">
+        <div className="d-flex justify-content-between align-items-center">
+          <h2>
+            <i className="bi bi-box-seam"></i>
+            Gestión de Productos
+          </h2>
+          <button className="btn btn-light" onClick={() => handleShowModal('crear')}>
+            <i className="bi bi-plus-lg me-2"></i>
+            Nuevo Producto
+          </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <div className="container-fluid px-4">
+        {/* Stats Cards */}
+        <div className="row stats-row">
+          <div className="col-md-3">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-boxes"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{totalProductos}</h3>
+                <p>Total Productos</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-box"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{stockTotal}</h3>
+                <p>Stock Total</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-exclamation-triangle"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{productosBajoStock}</h3>
+                <p>Bajo Stock</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-x-circle"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{productosAgotados}</h3>
+                <p>Agotados</p>
+              </div>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="table-responsive">
-          <table className="table table-striped table-bordered table-hover">
-            <thead className="bg-light">
-              <tr>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productosFiltrados.length > 0 ? (
-                productosFiltrados.map((producto) => (
-                  <tr key={producto._id}>
-                    <td>{producto.nombre}</td>
-                    <td>
-                      <span className="badge bg-info">{producto.categoria.nombre}</span>
-                    </td>
-                    <td>${producto.precio.toFixed(2)}</td>
-                    <td>{producto.stock} unidades</td>
-                    <td>{getStockBadge(producto.stock)}</td>
-                    <td>
-                      <button
-                        className="btn btn-outline-primary btn-sm me-2"
-                        onClick={() => handleShowModal('stock', producto)}
-                      >
-                        <i className="bi bi-arrow-up me-1"></i>Stock
-                      </button>
-                      <button
-                        className="btn btn-outline-warning btn-sm me-2"
-                        onClick={() => handleShowModal('editar', producto)}
-                      >
-                        <i className="bi bi-pencil me-1"></i>Editar
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => handleEliminar(producto._id)}
-                      >
-                        <i className="bi bi-trash me-1"></i>Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-4">
-                    No se encontraron productos
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {renderProductoModal()}
-      {renderStockModal()}
+        {/* Search Box */}
+        <div className="search-box mb-4">
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por nombre o categoría..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <div className="custom-alert custom-alert-danger">
+            <i className="bi bi-exclamation-triangle-fill"></i>
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="custom-alert custom-alert-success">
+            <i className="bi bi-check-circle-fill"></i>
+            {success}
+          </div>
+        )}
+
+        {/* Products Table */}
+        {loading ? (
+          <div className="text-center py-5">
+            <div className="custom-spinner"></div>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <div className="table-responsive">
+              <table className="table custom-table">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosFiltrados.length > 0 ? (
+                    productosFiltrados.map((producto) => (
+                      <tr key={producto._id}>
+                        <td data-label="Producto">
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="product-icon">
+                              <i className={`bi ${getProductIcon(producto.categoria)}`}></i>
+                            </div>
+                            <span className="product-name">{producto.nombre}</span>
+                          </div>
+                        </td>
+                        <td data-label="Categoría">
+                          <span className="category-badge">
+                            <i className="bi bi-folder me-1"></i>
+                            {producto.categoria.nombre}
+                          </span>
+                        </td>
+                        <td data-label="Precio" className="price-cell">
+                          ${producto.precio.toFixed(2)}
+                        </td>
+                        <td data-label="Stock" className="stock-cell">
+                          {producto.stock} unidades
+                        </td>
+                        <td data-label="Estado">
+                          {getStockBadge(producto.stock)}
+                        </td>
+                        <td data-label="Acciones">
+                          <div className="action-buttons">
+                            <button
+                              className="btn-action btn-stock"
+                              onClick={() => handleShowModal('stock', producto)}
+                              title="Modificar stock"
+                            >
+                              <i className="bi bi-arrow-up"></i>
+                              Stock
+                            </button>
+                            <button
+                              className="btn-action btn-edit"
+                              onClick={() => handleShowModal('editar', producto)}
+                              title="Editar producto"
+                            >
+                              <i className="bi bi-pencil"></i>
+                              Editar
+                            </button>
+                            <button
+                              className="btn-action btn-delete"
+                              onClick={() => handleEliminar(producto._id)}
+                              title="Eliminar producto"
+                            >
+                              <i className="bi bi-trash"></i>
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6">
+                        <div className="empty-state">
+                          <i className="bi bi-box"></i>
+                          <p>No se encontraron productos</p>
+                          <button className="btn btn-primary" onClick={() => handleShowModal('crear')}>
+                            <i className="bi bi-plus me-2"></i>
+                            Crear primer producto
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {renderProductoModal()}
+        {renderStockModal()}
+      </div>
     </div>
   );
 };
