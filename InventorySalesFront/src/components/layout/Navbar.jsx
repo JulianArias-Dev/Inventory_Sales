@@ -3,10 +3,15 @@ import { NavLink } from "react-router-dom"
 const Navbar = () => {
     return (
         <div
-            className="d-flex flex-column flex-shrink-0 p-3 bg-dark text-white"
-            style={{ width: "250px", minHeight: "100vh" }}
+            className="bg-dark text-white p-3 position-fixed"
+            style={{
+                width: "250px",
+                height: "100vh",
+                top: 0,
+                left: 0
+            }}
         >
-            <span className="fs-4 mb-3">Inventario y Ventas</span>
+            <span className="fs-4 mb-3 d-block">Inventario y Ventas</span>
 
             <ul className="nav nav-pills flex-column mb-auto">
 

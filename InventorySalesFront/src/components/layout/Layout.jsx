@@ -2,12 +2,18 @@ import Navbar from "./Navbar"
 
 const Layout = ({ children }) => {
   return (
-    <div className="d-flex">
+    <>
       <Navbar />
-      <div className="flex-grow-1 p-4">
+      <div
+        style={{
+          marginLeft: "250px",
+          padding: "1.5rem",
+          minHeight: "100vh"
+        }}
+      >
         {children}
       </div>
-    </div>
+    </>
   )
 }
 
