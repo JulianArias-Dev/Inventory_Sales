@@ -10,14 +10,18 @@ services:
       - db
     environment:
       - ConnectionStrings__DefaultConnection=Server=db;Database=master;User=sa;Password=Unicesar+2026;TrustServerCertificate=True;
+    networks:
+      - app-network
 
   frontend:
     build: ./InventorySalesFront
     container_name: InventorySalesfrontend
-    ports: 
+    ports:
       - "5173:5173"
     depends_on:
       - api
+    networks:
+      - app-network
 
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -29,6 +33,12 @@ services:
       - "1433:1433"
     volumes:
       - sql_data:/var/opt/mssql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   sql_data:

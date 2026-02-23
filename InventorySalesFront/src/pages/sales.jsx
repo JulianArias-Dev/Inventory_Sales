@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Alert } from 'react-bootstrap';
-import salesService from '../services/salesService'; // 👈 IMPORTACIÓN CORREGIDA
+import salesService from '../services/salesService';
 import SalesTable from '../components/SalesTable';
 import SaleFormModal from '../components/SaleFormModal';
+import SalesDetailsModal from '../components/SaleDetailsModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/sales.css';
 
@@ -10,6 +11,8 @@ const Sales = () => {
     const [ventas, setVentas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedVentaId, setSelectedVentaId] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [stats, setStats] = useState({
@@ -25,9 +28,7 @@ const Sales = () => {
     const cargarVentas = async () => {
         try {
             setLoading(true);
-            console.log('Cargando ventas...'); // Para debug
-            const data = await salesService.getVentas(); // 👈 AHORA SÍ FUNCIONA
-            console.log('Ventas cargadas:', data);
+            const data = await salesService.getVentas();
             setVentas(data || []);
             calcularStats(data || []);
             setError('');
@@ -52,8 +53,13 @@ const Sales = () => {
     };
 
     const handleViewDetails = (id) => {
-        console.log('Ver detalles de venta:', id);
-        // Aquí puedes implementar la lógica para ver detalles
+        setSelectedVentaId(id);
+        setShowDetailsModal(true);
+    };
+
+    const handleCloseDetails = () => {
+        setShowDetailsModal(false);
+        setSelectedVentaId(null);
     };
 
     const handleSuccess = () => {
@@ -148,11 +154,19 @@ const Sales = () => {
                     loading={loading}
                 />
 
-                {/* Modal */}
+                {/* Modal de nueva venta */}
                 {showModal && (
                     <SaleFormModal
                         onClose={() => setShowModal(false)}
                         onSuccess={handleSuccess}
+                    />
+                )}
+
+                {/* Modal de detalles de venta */}
+                {showDetailsModal && selectedVentaId && (
+                    <SalesDetailsModal
+                        ventaId={selectedVentaId}
+                        onClose={handleCloseDetails}
                     />
                 )}
             </Container>
