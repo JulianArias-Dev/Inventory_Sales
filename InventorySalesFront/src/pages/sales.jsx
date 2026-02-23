@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getVentas } from "../services/ventasService";
+import { getVentas } from "../services/salesService";
 import SalesTable from "../components/SalesTable";
 import SaleFormModal from "../components/SaleFormModal";
-import SalesDetailsModal from "../components/SalesDetailsModal";
+import SalesDetailsModal from "../components/SaleDetailsModal";
 
 const Sales = () => {
     const [ventas, setVentas] = useState([]);
