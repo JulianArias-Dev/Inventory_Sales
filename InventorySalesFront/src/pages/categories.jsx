@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { categoriaService } from '../services/categoriesService';
+import '../styles/categories.css'; // Importar el CSS
 
 const Categories = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('crear'); // 'crear' o 'editar'
+  const [modalType, setModalType] = useState('crear');
   const [selectedCategoria, setSelectedCategoria] = useState(null);
-  const [formData, setFormData] = useState({
-    nombre: ''
-  });
+  const [formData, setFormData] = useState({ nombre: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,13 +33,7 @@ const Categories = () => {
     setModalType(type);
     setSelectedCategoria(categoria);
     setError('');
-    
-    if (type === 'crear') {
-      setFormData({ nombre: '' });
-    } else if (type === 'editar' && categoria) {
-      setFormData({ nombre: categoria.nombre });
-    }
-    
+    setFormData({ nombre: categoria ? categoria.nombre : '' });
     setShowModal(true);
   };
 
@@ -51,11 +44,7 @@ const Categories = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData({ nombre: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -99,150 +88,212 @@ const Categories = () => {
     );
   };
 
+  const totalCategorias = categorias.length;
+  const categoriasConProductos = categorias.filter(c => 
+    // Esto debería venir del servicio, pero por ahora lo simulamos
+    ['1', '2'].includes(c._id)
+  ).length;
+
   const categoriasFiltradas = filtrarCategorias();
 
-  // Modal para crear/editar categoría
-  const renderModal = () => {
-    if (!showModal) return null;
-    
-    return (
-      <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
-        <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{modalType === 'crear' ? 'Nueva Categoría' : 'Editar Categoría'}</h5>
-              <button type="button" className="btn-close" onClick={handleCloseModal}></button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body">
-                {error && <div className="alert alert-danger">{error}</div>}
-                
-                <div className="mb-3">
-                  <label className="form-label">Nombre de la Categoría</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleInputChange}
-                    placeholder="Ej: Electrónica, Ropa, Hogar..."
-                    required
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {modalType === 'crear' ? 'Crear Categoría' : 'Guardar Cambios'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
+  const getCategoryIcon = (nombre) => {
+    const iconos = {
+      'Electrónica': 'bi-tv',
+      'Ropa': 'bi-hanger',
+      'Hogar': 'bi-house-heart',
+      'Deportes': 'bi-trophy'
+    };
+    return iconos[nombre] || 'bi-folder';
   };
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gestión de Categorías</h2>
-        <button className="btn btn-primary" onClick={() => handleShowModal('crear')}>
-          <i className="bi bi-plus me-2"></i>Nueva Categoría
-        </button>
-      </div>
-
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
-          <i className="bi bi-exclamation-triangle-fill me-2"></i>
-          {error}
-          <button type="button" className="btn-close" onClick={() => setError('')}></button>
-        </div>
-      )}
-      
-      {success && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          <i className="bi bi-check-circle-fill me-2"></i>
-          {success}
-          <button type="button" className="btn-close" onClick={() => setSuccess('')}></button>
-        </div>
-      )}
-
-      <div className="mb-4">
-        <div className="input-group">
-          <span className="input-group-text">
-            <i className="bi bi-search"></i>
-          </span>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Buscar categoría por nombre..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <div className="categories-container">
+      <div className="page-header">
+        <div className="d-flex justify-content-between align-items-center">
+          <h2>
+            <i className="bi bi-tags"></i>
+            Gestión de Categorías
+          </h2>
+          <button className="btn btn-light" onClick={() => handleShowModal('crear')}>
+            <i className="bi bi-plus-lg me-2"></i>
+            Nueva Categoría
+          </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <div className="container-fluid px-4">
+        {/* Stats Cards */}
+        <div className="row stats-row">
+          <div className="col-md-4">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-tags"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{totalCategorias}</h3>
+                <p>Total Categorías</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-box"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{categoriasConProductos}</h3>
+                <p>Con Productos</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <i className="bi bi-folder"></i>
+              </div>
+              <div className="stat-info">
+                <h3>{totalCategorias - categoriasConProductos}</h3>
+                <p>Sin Productos</p>
+              </div>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="row">
-          {categoriasFiltradas.length > 0 ? (
-            categoriasFiltradas.map((categoria) => (
-              <div key={categoria._id} className="col-md-4 mb-3">
-                <div className="card">
+
+        {/* Search Box */}
+        <div className="search-box mb-4">
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar categoría por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <div className="custom-alert custom-alert-danger">
+            <i className="bi bi-exclamation-triangle-fill"></i>
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="custom-alert custom-alert-success">
+            <i className="bi bi-check-circle-fill"></i>
+            {success}
+          </div>
+        )}
+
+        {/* Categories Grid */}
+        {loading ? (
+          <div className="text-center py-5">
+            <div className="custom-spinner"></div>
+          </div>
+        ) : (
+          <div className="categories-grid">
+            {categoriasFiltradas.length > 0 ? (
+              categoriasFiltradas.map((categoria) => (
+                <div key={categoria._id} className="category-card">
                   <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h5 className="card-title mb-1">{categoria.nombre}</h5>
-                        <p className="card-text text-muted">
-                          <small>
-                            <i className="bi bi-tag me-1"></i>
-                            ID: {categoria._id}
-                          </small>
-                        </p>
+                    <div className="category-header">
+                      <div className="category-icon">
+                        <i className={getCategoryIcon(categoria.nombre)}></i>
                       </div>
-                      <div className="d-flex gap-2">
-                        <button
-                          className="btn btn-warning"
-                          onClick={() => handleShowModal('editar', categoria)}
-                          title="Editar categoría"
-                        >
-                          <i className="bi bi-pencil me-2"></i>
-                          Editar
-                        </button>
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => handleEliminar(categoria._id, categoria.nombre)}
-                          title="Eliminar categoría"
-                        >
-                          <i className="bi bi-trash me-2"></i>
-                          Eliminar
-                        </button>
-                      </div>
+                    </div>
+                    
+                    <h5 className="category-title">
+                      {categoria.nombre}
+                    </h5>
+                    
+                    <div className="category-id">
+                      <i className="bi bi-hash"></i>
+                      ID: {categoria._id}
+                    </div>
+
+                    <div className="category-actions">
+                      <button
+                        className="btn-category btn-category-edit"
+                        onClick={() => handleShowModal('editar', categoria)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                        Editar
+                      </button>
+                      <button
+                        className="btn-category btn-category-delete"
+                        onClick={() => handleEliminar(categoria._id, categoria.nombre)}
+                      >
+                        <i className="bi bi-trash"></i>
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <i className="bi bi-folder"></i>
+                <p>No se encontraron categorías</p>
+                <button className="btn btn-primary" onClick={() => handleShowModal('crear')}>
+                  <i className="bi bi-plus me-2"></i>
+                  Crear primera categoría
+                </button>
               </div>
-            ))
-          ) : (
-            <div className="col-12">
-              <div className="alert alert-info text-center">
-                <i className="bi bi-info-circle me-2"></i>
-                No se encontraron categorías
+            )}
+          </div>
+        )}
+
+        {/* Modal */}
+        {showModal && (
+          <div className="modal fade show category-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
+            <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    {modalType === 'crear' ? 'Nueva Categoría' : 'Editar Categoría'}
+                  </h5>
+                  <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+                </div>
+                <form onSubmit={handleSubmit} className="category-form">
+                  <div className="modal-body">
+                    {error && (
+                      <div className="custom-alert custom-alert-danger mb-3">
+                        <i className="bi bi-exclamation-triangle-fill"></i>
+                        {error}
+                      </div>
+                    )}
+                    
+                    <div className="mb-3">
+                      <label className="form-label">Nombre de la Categoría</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.nombre}
+                        onChange={handleInputChange}
+                        placeholder="Ej: Electrónica, Ropa, Hogar..."
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      {modalType === 'crear' ? 'Crear Categoría' : 'Guardar Cambios'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {renderModal()}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
