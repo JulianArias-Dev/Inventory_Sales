@@ -1,65 +1,63 @@
-import { useEffect, useState } from "react";
-import { getVentas } from "../services/salesService";
-import SalesTable from "../components/SalesTable";
-import SaleFormModal from "../components/SaleFormModal";
-import SalesDetailsModal from "../components/SaleDetailsModal";
+import React, { useState, useEffect } from 'react';
+import salesService from '../services/salesService';
+import SaleFormModal from '../components/SaleFormModal';
+import '../styles/sales.css';
 
 const Sales = () => {
     const [ventas, setVentas] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showFormModal, setShowFormModal] = useState(false);
-    const [selectedVentaId, setSelectedVentaId] = useState(null);
-
-    const loadVentas = async () => {
-        try {
-            const data = await getVentas();
-            setVentas(data);
-        } catch (error) {
-            console.error("Error cargando ventas:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        loadVentas();
+        cargarVentas();
     }, []);
 
-    const handleVentaRegistrada = () => {
-        setShowFormModal(false);
-        loadVentas(); // refresca tabla
+    const cargarVentas = async () => {
+        const data = await saleService.getAll();
+        setVentas(data);
     };
 
     return (
-        <div>
-            <h2>Ventas</h2>
+        <div className="sales-page">
 
-            <button onClick={() => setShowFormModal(true)}>
-                Registrar Venta
-            </button>
+            <div className="sales-header">
+                <h2 className="page-title">Ventas</h2>
+                <button
+                    className="btn-primary"
+                    onClick={() => setShowModal(true)}
+                >
+                    Nueva Venta
+                </button>
+            </div>
 
-            {loading ? (
-                <p>Cargando...</p>
-            ) : (
-                <SalesTable
-                    ventas={ventas}
-                    onViewDetails={(id) => setSelectedVentaId(id)}
-                />
-            )}
+            <table className="sales-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
 
-            {showFormModal && (
+                <tbody>
+                    {ventas.map((venta) => (
+                        <tr key={venta.id}>
+                            <td>{venta.id}</td>
+                            <td>{new Date(venta.date).toLocaleDateString()}</td>
+                            <td>{venta.customerName}</td>
+                            <td>${venta.totalAmount}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            {showModal && (
                 <SaleFormModal
-                    onClose={() => setShowFormModal(false)}
-                    onSuccess={handleVentaRegistrada}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={cargarVentas}
                 />
             )}
 
-            {selectedVentaId && (
-                <SalesDetailsModal
-                    ventaId={selectedVentaId}
-                    onClose={() => setSelectedVentaId(null)}
-                />
-            )}
         </div>
     );
 };

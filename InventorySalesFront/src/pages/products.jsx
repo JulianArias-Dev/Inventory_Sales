@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { productoService } from '../services/productService';
+import productService from '../services/productService';
 import '../styles/products.css';
 
 const Products = () => {
@@ -10,16 +10,27 @@ const Products = () => {
   const [modalType, setModalType] = useState('crear'); // 'crear', 'editar', 'stock'
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [formData, setFormData] = useState({
-    nombre: '',
-    precio: '',
+    name: '',
+    price: '',
     stock: '',
-    categoriaId: ''
+    categoria: ''
   });
   const [stockOperation, setStockOperation] = useState('aumentar');
   const [stockCantidad, setStockCantidad] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Cargar categorías predefinidas
+  useEffect(() => {
+    const categoriasPredefinidas = [
+      { _id: '1', nombre: 'Electrónica' },
+      { _id: '2', nombre: 'Ropa' },
+      { _id: '3', nombre: 'Hogar' },
+      { _id: '4', nombre: 'Deportes' }
+    ];
+    setCategorias(categoriasPredefinidas);
+  }, []);
 
   useEffect(() => {
     cargarDatos();
@@ -28,41 +39,62 @@ const Products = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const data = await productoService.getAll();
-      setProductos(data);
-      setCategorias(productoService.getCategorias());
-    } catch {
+      const data = await productService.getAll();
+      // Transformar los datos para mantener compatibilidad con el formato anterior
+      const productosTransformados = data.map(producto => ({
+        _id: producto.id,
+        nombre: producto.name,
+        precio: producto.price,
+        stock: producto.stock,
+        categoria: {
+          _id: producto.categoria,
+          nombre: getNombreCategoria(producto.categoria)
+        }
+      }));
+      setProductos(productosTransformados);
+    } catch (error) {
       setError('Error al cargar los productos');
+      console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getNombreCategoria = (categoriaId) => {
+    const categoriasMap = {
+      '1': 'Electrónica',
+      '2': 'Ropa',
+      '3': 'Hogar',
+      '4': 'Deportes'
+    };
+    return categoriasMap[categoriaId] || 'Sin categoría';
   };
 
   const handleShowModal = (type, producto = null) => {
     setModalType(type);
     setSelectedProducto(producto);
     setError('');
-    
+
     if (type === 'crear') {
       setFormData({
-        nombre: '',
-        precio: '',
+        name: '',
+        price: '',
         stock: '',
-        categoriaId: ''
+        categoria: ''
       });
     } else if (type === 'editar' && producto) {
       setFormData({
-        nombre: producto.nombre,
-        precio: producto.precio,
+        name: producto.nombre,
+        price: producto.precio,
         stock: producto.stock,
-        categoriaId: producto.categoria._id
+        categoria: producto.categoria._id
       });
     } else if (type === 'stock' && producto) {
       setSelectedProducto(producto);
       setStockOperation('aumentar');
       setStockCantidad(1);
     }
-    
+
     setShowModal(true);
   };
 
@@ -83,36 +115,74 @@ const Products = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     try {
       if (modalType === 'crear') {
-        const nuevoProducto = await productoService.create(formData);
-        setProductos([...productos, nuevoProducto]);
+        const nuevoProducto = await productService.create(formData);
+        // Transformar respuesta
+        const productoTransformado = {
+          _id: nuevoProducto.id,
+          nombre: nuevoProducto.name,
+          precio: nuevoProducto.price,
+          stock: nuevoProducto.stock,
+          categoria: {
+            _id: nuevoProducto.categoria,
+            nombre: getNombreCategoria(nuevoProducto.categoria)
+          }
+        };
+        setProductos([...productos, productoTransformado]);
         setSuccess('Producto creado exitosamente');
       } else if (modalType === 'editar' && selectedProducto) {
-        const productoActualizado = await productoService.update(selectedProducto._id, formData);
-        setProductos(productos.map(p => p._id === selectedProducto._id ? productoActualizado : p));
+        const productoActualizado = await productService.update(selectedProducto._id, formData);
+        // Transformar respuesta
+        const productoTransformado = {
+          _id: productoActualizado.id,
+          nombre: productoActualizado.name,
+          precio: productoActualizado.price,
+          stock: productoActualizado.stock,
+          categoria: {
+            _id: productoActualizado.categoria,
+            nombre: getNombreCategoria(productoActualizado.categoria)
+          }
+        };
+        setProductos(productos.map(p => p._id === selectedProducto._id ? productoTransformado : p));
         setSuccess('Producto actualizado exitosamente');
       }
-      
+
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Error al guardar el producto');
     }
   };
 
   const handleModificarStock = async () => {
     if (!selectedProducto) return;
-    
+
     try {
-      const productoActualizado = await productoService.modificarStock(
-        selectedProducto._id, 
-        stockCantidad, 
-        stockOperation
-      );
-      
-      setProductos(productos.map(p => p._id === selectedProducto._id ? productoActualizado : p));
+      const nuevoStock = stockOperation === 'aumentar'
+        ? selectedProducto.stock + stockCantidad
+        : Math.max(0, selectedProducto.stock - stockCantidad);
+
+      const productoActualizado = await productService.update(selectedProducto._id, {
+        name: selectedProducto.nombre,
+        price: selectedProducto.precio,
+        stock: nuevoStock,
+        categoria: selectedProducto.categoria._id
+      });
+
+      const productoTransformado = {
+        _id: productoActualizado.id,
+        nombre: productoActualizado.name,
+        precio: productoActualizado.price,
+        stock: productoActualizado.stock,
+        categoria: {
+          _id: productoActualizado.categoria,
+          nombre: getNombreCategoria(productoActualizado.categoria)
+        }
+      };
+
+      setProductos(productos.map(p => p._id === selectedProducto._id ? productoTransformado : p));
       setSuccess(`Stock ${stockOperation === 'aumentar' ? 'aumentado' : 'disminuido'} exitosamente`);
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
@@ -123,9 +193,9 @@ const Products = () => {
 
   const handleEliminar = async (id) => {
     if (!window.confirm('¿Está seguro de eliminar este producto?')) return;
-    
+
     try {
-      await productoService.delete(id);
+      await productService.delete(id);
       setProductos(productos.filter(p => p._id !== id));
       setSuccess('Producto eliminado exitosamente');
       setTimeout(() => setSuccess(''), 3000);
@@ -167,7 +237,7 @@ const Products = () => {
   // Modal para Crear/Editar Producto
   const renderProductoModal = () => {
     if (!showModal || modalType === 'stock') return null;
-    
+
     return (
       <div className="modal fade show custom-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -187,7 +257,7 @@ const Products = () => {
                     {error}
                   </div>
                 )}
-                
+
                 <div className="mb-3">
                   <label className="form-label">
                     <i className="bi bi-tag me-2"></i>
@@ -196,8 +266,8 @@ const Products = () => {
                   <input
                     type="text"
                     className="form-control"
-                    name="nombre"
-                    value={formData.nombre}
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Ej: Smart TV 55, Laptop Gaming..."
                     required
@@ -211,8 +281,8 @@ const Products = () => {
                   </label>
                   <select
                     className="form-select"
-                    name="categoriaId"
-                    value={formData.categoriaId}
+                    name="categoria"
+                    value={formData.categoria}
                     onChange={handleInputChange}
                     required
                   >
@@ -235,10 +305,10 @@ const Products = () => {
                     <input
                       type="number"
                       className="form-control"
-                      name="precio"
+                      name="price"
                       step="0.01"
                       min="0"
-                      value={formData.precio}
+                      value={formData.price}
                       onChange={handleInputChange}
                       placeholder="0.00"
                       required
@@ -283,7 +353,7 @@ const Products = () => {
   // Modal para Modificar Stock
   const renderStockModal = () => {
     if (!showModal || modalType !== 'stock' || !selectedProducto) return null;
-    
+
     return (
       <div className="modal fade show custom-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleCloseModal}>
         <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -302,7 +372,7 @@ const Products = () => {
                   {error}
                 </div>
               )}
-              
+
               <div className="product-info mb-4 p-3 bg-light rounded">
                 <div className="d-flex align-items-center gap-3">
                   <div className="product-icon">
@@ -317,7 +387,7 @@ const Products = () => {
                   </div>
                 </div>
                 <div className="mt-3">
-                  <strong>Stock actual:</strong> 
+                  <strong>Stock actual:</strong>
                   <span className="ms-2 badge bg-info">{selectedProducto.stock} unidades</span>
                 </div>
               </div>
@@ -374,8 +444,8 @@ const Products = () => {
                 <i className="bi bi-x-lg me-2"></i>
                 Cancelar
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-primary"
                 onClick={handleModificarStock}
                 disabled={!stockCantidad || stockCantidad < 1}
@@ -477,7 +547,7 @@ const Products = () => {
             {error}
           </div>
         )}
-        
+
         {success && (
           <div className="custom-alert custom-alert-success">
             <i className="bi bi-check-circle-fill"></i>
@@ -523,7 +593,7 @@ const Products = () => {
                           </span>
                         </td>
                         <td data-label="Precio" className="price-cell">
-                          ${producto.precio.toFixed(2)}
+                          ${Number(producto.precio).toFixed(2)}
                         </td>
                         <td data-label="Stock" className="stock-cell">
                           {producto.stock} unidades
