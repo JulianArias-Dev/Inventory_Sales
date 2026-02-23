@@ -19,7 +19,7 @@ const SalesTable = ({ ventas, onViewDetails }) => {
                         <td>${venta.totalAmount}</td>
                         <td>
                             <button onClick={() => onViewDetails(venta.id)}>
-                                Ver Detalle
+                                Detalle
                             </button>
                         </td>
                     </tr>
