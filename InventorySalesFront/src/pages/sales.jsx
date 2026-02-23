@@ -1,44 +1,67 @@
-import { useState } from "react";
-import SaleDetailsModal from "../components/SaleDetailsModal";
+import { useEffect, useState } from "react";
+import { getVentas } from "../services/ventasService";
 import SalesTable from "../components/SalesTable";
-import "../styles/sales.css";
+import SaleFormModal from "../components/SaleFormModal";
+import SalesDetailsModal from "../components/SalesDetailsModal";
 
-const mockSales = [
-    {
-        id: "F001",
-        cliente: "Juan Pérez",
-        total: 150000,
-        productos: [
-            { productId: "P01", cantidad: 2, unitPrice: 30000 },
-            { productId: "P02", cantidad: 3, unitPrice: 30000 }
-        ]
-    },
-    {
-        id: "F002",
-        cliente: "María Gómez",
-        total: 80000,
-        productos: [
-            { productId: "P03", cantidad: 1, unitPrice: 80000 }
-        ]
-    }
-];
+const Sales = () => {
+    const [ventas, setVentas] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showFormModal, setShowFormModal] = useState(false);
+    const [selectedVentaId, setSelectedVentaId] = useState(null);
 
-function Sales() {
-    const [selectedSale, setSelectedSale] = useState(null);
+    const loadVentas = async () => {
+        try {
+            const data = await getVentas();
+            setVentas(data);
+        } catch (error) {
+            console.error("Error cargando ventas:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadVentas();
+    }, []);
+
+    const handleVentaRegistrada = () => {
+        setShowFormModal(false);
+        loadVentas(); // refresca tabla
+    };
 
     return (
-        <div className="sales-container">
-            <h2 className="mb-4">Ventas</h2>
+        <div>
+            <h2>Ventas</h2>
 
-            <SalesTable sales={mockSales} onView={setSelectedSale} />
+            <button onClick={() => setShowFormModal(true)}>
+                Registrar Venta
+            </button>
 
-            {selectedSale && (
-                <SaleDetailsModal
-                    sale={selectedSale}
-                    onClose={() => setSelectedSale(null)}
+            {loading ? (
+                <p>Cargando...</p>
+            ) : (
+                <SalesTable
+                    ventas={ventas}
+                    onViewDetails={(id) => setSelectedVentaId(id)}
+                />
+            )}
+
+            {showFormModal && (
+                <SaleFormModal
+                    onClose={() => setShowFormModal(false)}
+                    onSuccess={handleVentaRegistrada}
+                />
+            )}
+
+            {selectedVentaId && (
+                <SalesDetailsModal
+                    ventaId={selectedVentaId}
+                    onClose={() => setSelectedVentaId(null)}
                 />
             )}
         </div>
     );
-}
+};
+
 export default Sales;
