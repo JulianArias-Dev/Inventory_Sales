@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getVentaById } from "../services/ventasService";
+import { getVentaById } from "../services/salesService";
 
 const SalesDetailsModal = ({ ventaId, onClose }) => {
     const [venta, setVenta] = useState(null);
