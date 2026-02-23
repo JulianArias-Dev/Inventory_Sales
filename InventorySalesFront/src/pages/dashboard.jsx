@@ -97,26 +97,20 @@ const Dashboard = () => {
   }
 
   return (
-    <Container fluid className="py-4">
-      {/* Header */}
-      <Row className="mb-4">
-        <Col>
-          <h2 className="text-primary">
+    <div className="dashboard-container">
+      {/* Header - DEBE SER EL PRIMER ELEMENTO SIN CONTAINER ALREDEDOR */}
+      <div className="dashboard-header">
+        <div className="d-flex justify-content-between align-items-center px-4">
+          <h2>
             <i className="bi bi-speedometer2 me-2"></i>
             Dashboard
           </h2>
-          <p className="text-muted">Resumen general de ventas y estadísticas</p>
-        </Col>
-        <Col xs="auto">
-          <button
-            className="btn btn-outline-primary"
-            onClick={cargarDatos}
-          >
+          <button className="btn btn-light" onClick={cargarDatos}>
             <i className="bi bi-arrow-repeat me-2"></i>
             Actualizar
           </button>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       {error && (
         <Alert variant="danger" className="mb-4">
@@ -228,7 +222,7 @@ const Dashboard = () => {
           </div>
         </Col>
       </Row>
-    </Container>
+    </div>
   );
 };
 
