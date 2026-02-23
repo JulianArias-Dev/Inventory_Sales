@@ -44,7 +44,7 @@ namespace API.Controllers
 
 			return CreatedAtAction(
 				nameof(GetCategoryById),
-				new { id = newCategory.Id },
+				new { categoryId = newCategory.Id },
 				dto);
 		}
 
