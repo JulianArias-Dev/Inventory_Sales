@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Alert } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import * as salesService from '../services/salesService';
+import salesService from '../services/salesService'; // 👈 IMPORTACIÓN CORREGIDA
 import SalesTable from '../components/SalesTable';
 import SaleFormModal from '../components/SaleFormModal';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/sales.css';
 
 const Sales = () => {
     const [ventas, setVentas] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false); // Esto controla el modal
+    const [showModal, setShowModal] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [stats, setStats] = useState({
@@ -25,13 +25,15 @@ const Sales = () => {
     const cargarVentas = async () => {
         try {
             setLoading(true);
-            const data = await salesService.getVentas();
-            setVentas(data);
-            calcularStats(data);
+            console.log('Cargando ventas...'); // Para debug
+            const data = await salesService.getVentas(); // 👈 AHORA SÍ FUNCIONA
+            console.log('Ventas cargadas:', data);
+            setVentas(data || []);
+            calcularStats(data || []);
             setError('');
         } catch (error) {
+            console.error('Error al cargar ventas:', error);
             setError('Error al cargar las ventas');
-            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -76,7 +78,7 @@ const Sales = () => {
                             <Button
                                 variant="light"
                                 className="d-flex align-items-center gap-2"
-                                onClick={() => setShowModal(true)} // Esto abre el modal
+                                onClick={() => setShowModal(true)}
                             >
                                 <i className="bi bi-plus-lg"></i>
                                 Nueva Venta
@@ -146,7 +148,7 @@ const Sales = () => {
                     loading={loading}
                 />
 
-                {/* Modal - Solo se muestra cuando showModal es true */}
+                {/* Modal */}
                 {showModal && (
                     <SaleFormModal
                         onClose={() => setShowModal(false)}
