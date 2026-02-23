@@ -1,31 +1,98 @@
-const SalesTable = ({ ventas, onViewDetails }) => {
+import React from 'react';
+import '../styles/salesTable.css';
+
+const SalesTable = ({ ventas, onViewDetails, loading }) => {
+    if (loading) {
+        return (
+            <div className="sales-table-wrapper">
+                <div className="loading-state">
+                    <div className="custom-spinner"></div>
+                    <p className="text-muted">Cargando ventas...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!ventas || ventas.length === 0) {
+        return (
+            <div className="sales-table-wrapper">
+                <div className="empty-state">
+                    <i className="bi bi-cart-x"></i>
+                    <p>No hay ventas registradas</p>
+                    <p className="text-muted">Comienza creando una nueva venta</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <table border="1" width="100%">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th>Total</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {ventas.map((venta) => (
-                    <tr key={venta.id}>
-                        <td>{venta.id}</td>
-                        <td>{new Date(venta.date).toLocaleDateString()}</td>
-                        <td>{venta.customerName}</td>
-                        <td>${venta.totalAmount}</td>
-                        <td>
-                            <button onClick={() => onViewDetails(venta.id)}>
-                                Detalle
-                            </button>
-                        </td>
+        <div className="sales-table-wrapper">
+            <table className="sales-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {ventas.map((venta) => (
+                        <tr key={venta.id}>
+                            <td data-label="ID">
+                                <span className="sale-id-badge">#{venta.id}</span>
+                            </td>
+                            <td data-label="Fecha">
+                                <div className="date-cell">
+                                    <i className="bi bi-calendar3"></i>
+                                    {new Date(venta.date).toLocaleDateString('es-ES', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                    })}
+                                </div>
+                            </td>
+                            <td data-label="Cliente">
+                                <div className="customer-info">
+                                    <div className="customer-avatar">
+                                        <i className="bi bi-person"></i>
+                                    </div>
+                                    <div className="customer-details">
+                                        <span className="customer-name">{venta.customerName}</span>
+                                        {venta.customerEmail && (
+                                            <span className="customer-email">{venta.customerEmail}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Total" className="amount-cell">
+                                ${venta.totalAmount?.toFixed(2) || '0.00'}
+                            </td>
+                            <td data-label="Acciones">
+                                <div className="action-buttons">
+                                    <button
+                                        className="btn-action btn-view"
+                                        onClick={() => onViewDetails(venta.id)}
+                                        title="Ver detalles de la venta"
+                                    >
+                                        <i className="bi bi-eye"></i>
+                                        Detalle
+                                    </button>
+                                    <button
+                                        className="btn-action btn-print"
+                                        onClick={() => window.print()} // Aquí puedes implementar la lógica de impresión
+                                        title="Imprimir factura"
+                                    >
+                                        <i className="bi bi-printer"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 };
 

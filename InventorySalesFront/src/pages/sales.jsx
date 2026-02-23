@@ -1,63 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import salesService from '../services/salesService';
+import { Container, Row, Col, Button, Alert } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import * as salesService from '../services/salesService';
+import SalesTable from '../components/SalesTable';
 import SaleFormModal from '../components/SaleFormModal';
 import '../styles/sales.css';
 
 const Sales = () => {
     const [ventas, setVentas] = useState([]);
-    const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false); // Esto controla el modal
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [stats, setStats] = useState({
+        totalVentas: 0,
+        totalIngresos: 0,
+        promedioVentas: 0
+    });
 
     useEffect(() => {
         cargarVentas();
     }, []);
 
     const cargarVentas = async () => {
-        const data = await saleService.getAll();
-        setVentas(data);
+        try {
+            setLoading(true);
+            const data = await salesService.getVentas();
+            setVentas(data);
+            calcularStats(data);
+            setError('');
+        } catch (error) {
+            setError('Error al cargar las ventas');
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const calcularStats = (data) => {
+        const totalVentas = data.length;
+        const totalIngresos = data.reduce((acc, venta) => acc + (venta.totalAmount || 0), 0);
+        const promedioVentas = totalVentas > 0 ? totalIngresos / totalVentas : 0;
+
+        setStats({
+            totalVentas,
+            totalIngresos,
+            promedioVentas
+        });
+    };
+
+    const handleViewDetails = (id) => {
+        console.log('Ver detalles de venta:', id);
+        // Aquí puedes implementar la lógica para ver detalles
+    };
+
+    const handleSuccess = () => {
+        setSuccess('Venta registrada exitosamente');
+        cargarVentas();
+        setTimeout(() => setSuccess(''), 3000);
     };
 
     return (
-        <div className="sales-page">
-
+        <div className="sales-container">
+            {/* Header */}
             <div className="sales-header">
-                <h2 className="page-title">Ventas</h2>
-                <button
-                    className="btn-primary"
-                    onClick={() => setShowModal(true)}
-                >
-                    Nueva Venta
-                </button>
+                <Container fluid>
+                    <Row className="align-items-center">
+                        <Col>
+                            <h2>
+                                <i className="bi bi-cart-check me-2"></i>
+                                Gestión de Ventas
+                            </h2>
+                        </Col>
+                        <Col xs="auto">
+                            <Button
+                                variant="light"
+                                className="d-flex align-items-center gap-2"
+                                onClick={() => setShowModal(true)} // Esto abre el modal
+                            >
+                                <i className="bi bi-plus-lg"></i>
+                                Nueva Venta
+                            </Button>
+                        </Col>
+                    </Row>
+                </Container>
             </div>
 
-            <table className="sales-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
+            <Container fluid className="px-4">
+                {/* Stats Cards */}
+                <Row className="stats-row">
+                    <Col md={4}>
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="bi bi-cart"></i>
+                            </div>
+                            <div className="stat-info">
+                                <h3>{stats.totalVentas}</h3>
+                                <p>Total Ventas</p>
+                            </div>
+                        </div>
+                    </Col>
+                    <Col md={4}>
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="bi bi-cash-stack"></i>
+                            </div>
+                            <div className="stat-info">
+                                <h3>${stats.totalIngresos.toFixed(2)}</h3>
+                                <p>Ingresos Totales</p>
+                            </div>
+                        </div>
+                    </Col>
+                    <Col md={4}>
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="bi bi-graph-up"></i>
+                            </div>
+                            <div className="stat-info">
+                                <h3>${stats.promedioVentas.toFixed(2)}</h3>
+                                <p>Promedio por Venta</p>
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
 
-                <tbody>
-                    {ventas.map((venta) => (
-                        <tr key={venta.id}>
-                            <td>{venta.id}</td>
-                            <td>{new Date(venta.date).toLocaleDateString()}</td>
-                            <td>{venta.customerName}</td>
-                            <td>${venta.totalAmount}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                {/* Alerts */}
+                {error && (
+                    <Alert variant="danger" className="custom-alert">
+                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                        {error}
+                    </Alert>
+                )}
 
-            {showModal && (
-                <SaleFormModal
-                    onClose={() => setShowModal(false)}
-                    onSuccess={cargarVentas}
+                {success && (
+                    <Alert variant="success" className="custom-alert">
+                        <i className="bi bi-check-circle-fill me-2"></i>
+                        {success}
+                    </Alert>
+                )}
+
+                {/* Sales Table */}
+                <SalesTable
+                    ventas={ventas}
+                    onViewDetails={handleViewDetails}
+                    loading={loading}
                 />
-            )}
 
+                {/* Modal - Solo se muestra cuando showModal es true */}
+                {showModal && (
+                    <SaleFormModal
+                        onClose={() => setShowModal(false)}
+                        onSuccess={handleSuccess}
+                    />
+                )}
+            </Container>
         </div>
     );
 };
