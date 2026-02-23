@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as productService from '../services/productService';
 import * as salesService from '../services/salesService';
 import SaleConfirmModal from './SaleConfirmModal';
-import '../styles/saleFormModal.css';
+import '../styles/SaleFormModal.css';
 
 const SaleFormModal = ({ onClose, onSuccess }) => {
     const [step, setStep] = useState('form');
