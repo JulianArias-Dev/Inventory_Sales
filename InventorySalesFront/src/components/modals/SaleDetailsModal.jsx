@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import salesService from "../../services/salesService";
-import "../styles/salesDetailsModal.css";
+import '../../styles/salesDetailsModal.css';
 
 const SalesDetailsModal = ({ ventaId, onClose }) => {
     const [venta, setVenta] = useState(null);

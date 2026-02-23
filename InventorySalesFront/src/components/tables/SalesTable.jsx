@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/salesTable.css';
+import '../../styles/salesTable.css';
 
 const SalesTable = ({ ventas, onViewDetails, loading }) => {
     if (loading) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/SaleFormModal.css';
+import '../../styles/SaleFormModal.css';
 
 const SaleConfirmModal = ({
     show,
