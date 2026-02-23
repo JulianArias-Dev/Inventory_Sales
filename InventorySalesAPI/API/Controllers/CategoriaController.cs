@@ -1,5 +1,5 @@
 ﻿using API.Data;
-using API.Models;
+using API.DTOs;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,14 +17,14 @@ namespace API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> GetCategorias()
+		public async Task<ActionResult<List<CategoryResponseDto>>> GetCategorias()
 		{
 			var categorias = await _services.GetAsync();
 			return Ok(categorias);
 		}
 
 		[HttpGet("{categoryId}")]
-		public async Task<ActionResult<Categoria>> GetCategoryById(int categoryId) { 
+		public async Task<ActionResult<CategoryResponseDto>> GetCategoryById(int categoryId) { 
 			var category = await _services.GetOneAsync(categoryId);
 
 			if(category==null)
@@ -35,17 +35,17 @@ namespace API.Controllers
 
 
 		[HttpPost]
-		public async Task<ActionResult<Categoria>> CreateCategoria([FromBody] Categoria categoria)
+		public async Task<ActionResult<CategoryResponseDto>> CreateCategoria([FromBody] CreateCategoryDto dto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
-			var newCategory = await _services.Create(categoria);
+			var newCategory = await _services.Create(dto);
 
 			return CreatedAtAction(
 				nameof(GetCategoryById),
-				new { id = categoria.Id },
-				categoria);
+				new { id = newCategory.Id },
+				dto);
 		}
 
 		[HttpDelete("{categoryId}")]
@@ -60,7 +60,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{categoryId}")]
-		public async Task<IActionResult> UpdateCategory(int catId, Categoria categoria)
+		public async Task<ActionResult<CategoryResponseDto>> UpdateCategory(int catId, CategoryResponseDto categoria)
 		{
 			var updated = await _services.Update(catId, categoria);
 

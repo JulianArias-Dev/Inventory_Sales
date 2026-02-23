@@ -1,5 +1,7 @@
-﻿using API.Models;
+﻿using API.DTOs;
+using API.Models;
 using API.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Services
 {
@@ -12,24 +14,95 @@ namespace API.Services
 			_repository = repositoy;
 		}
 
-		public async Task<List<Producto>> GetAsync()
+		public async Task<List<ProductoResponseDto>> GetAsync()
 		{
-			return await _repository.GetAllAsync();
+			var productos = await _repository.GetAllAsync();
+
+			var response = productos.Select(producto => new ProductoResponseDto
+			{
+				Id = producto.Id,
+				Name = producto.Name,
+				Price = producto.Price,
+				Stock = producto.Stock,
+				categoria = producto.CategoriaId
+			}).ToList();
+
+			return response;
 		}
 
-		public async Task<Producto?> GetOneAsync(int id)
+		public async Task<ProductoResponseDto?> GetOneAsync(int id)
 		{
-			return await _repository.GetOne(id);
+			var producto = await _repository.GetOne(id);
+			
+			if (producto == null)
+				return null;
+
+			return new ProductoResponseDto
+			{
+				Id = producto.Id,
+				Name = producto.Name,
+				Price = producto.Price,
+				Stock = producto.Stock,
+				categoria = producto.CategoriaId
+			};
 		}
 
-		public async Task<Producto> Create(Producto producto)
+		public async Task<ProductoResponseDto> Create(CreateProductoDto dto)
 		{
-			return await _repository.CreateAsync(producto);
+			var exists = await _repository.ExistsByNameAsync(dto.Name);
+			if (exists)
+				throw new InvalidOperationException("Ya existe un producto con ese nombre.");
+
+			var producto = new Producto
+			{
+				Name = dto.Name,
+				Price = dto.Price,
+				Stock = dto.Stock,
+				CategoriaId = dto.CategoriaId
+			};
+
+			try
+			{
+				producto = await _repository.CreateAsync(producto);
+			}
+			catch (DbUpdateException)
+			{
+				throw new InvalidOperationException("Ya existe un producto con ese nombre.");
+			}
+
+			return new ProductoResponseDto
+			{
+				Id = producto.Id,
+				Name = producto.Name,
+				Price = producto.Price,
+				Stock = producto.Stock,
+				categoria = producto.CategoriaId
+			};
 		}
 
-		public async Task<Producto?> Update(int productId, Producto producto)
+		public async Task<ProductoResponseDto?> Update(int productId, UpdateProductoDto dto)
 		{
-			return await _repository.UpdateProductAsync(productId, producto);
+			var producto = new Producto
+			{
+				Name = dto.Name,
+				Price = dto.Price,
+				Stock = dto.Stock,
+				CategoriaId = dto.CategoriaId
+			};
+
+			var productUpdated = await _repository.UpdateProductAsync(productId, producto);
+
+			if (productUpdated != null)
+				return new ProductoResponseDto
+				{
+					Id = productUpdated.Id,
+					Name = productUpdated.Name,
+					Price = productUpdated.Price,
+					Stock = productUpdated.Stock,
+					categoria = productUpdated.CategoriaId
+				};
+
+			return null;
 		}
 
 		public async Task<bool> Delete(int id)

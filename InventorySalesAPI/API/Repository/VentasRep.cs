@@ -24,23 +24,19 @@ namespace API.Repository
 				.FirstOrDefaultAsync(v => v.Id == id);
 		}
 
-		public async Task<Venta?> Create(Venta venta, List<VentaProducto> productos)
+		public async Task<Venta?> Create(Venta venta)
 		{
-			// Asociar productos a la venta
-			foreach (var vp in productos)
-			{
-				venta.VentaProductos.Add(new VentaProducto
-				{
-					ProductoId = vp.ProductoId,
-					Cantidad = vp.Cantidad,
-					PrecioUnitario = vp.PrecioUnitario
-				});
-			}
-
 			await _context.Ventas.AddAsync(venta);
 			await _context.SaveChangesAsync();
 
-			return await GetByIdAsync(venta.Id);
+			return venta; 
+		}
+
+		public async Task<List<Producto>> GetByIdsAsync(List<int> ids)
+		{
+			return await _context.Productos
+				.Where(p => ids.Contains(p.Id))
+				.ToListAsync();
 		}
 	}
 }

@@ -13,8 +13,14 @@ builder.Services.AddDbContext<AppDbContext>(
 builder.Services.AddProblemDetails();
 
 // Build Own Services
+builder.Services.AddScoped<CategoryRep>();
+builder.Services.AddScoped<CategoryServices>();
+
 builder.Services.AddScoped<ProductRep>();
 builder.Services.AddScoped<ProductService>();
+
+builder.Services.AddScoped<VentasRep>();
+builder.Services.AddScoped<VentasServices>();
 
 builder.Services.AddControllers();
 

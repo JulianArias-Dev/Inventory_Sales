@@ -37,6 +37,7 @@ namespace API.Repository
 			existingProduct.Name = updatedProducto.Name;
 			existingProduct.Price = updatedProducto.Price;
 			existingProduct.Stock = updatedProducto.Stock;
+			existingProduct.CategoriaId = updatedProducto.CategoriaId;
 
 			await _context.SaveChangesAsync();
 
@@ -57,5 +58,11 @@ namespace API.Repository
 
 			return true;
 		}
+
+		public async Task<bool> ExistsByNameAsync(string name)
+		{
+			return await _context.Productos
+				.AnyAsync(p => p.Name == name);
+		}		
 	}
 }

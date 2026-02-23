@@ -13,55 +13,74 @@ namespace API.Data
 		public DbSet<Producto> Productos { get; set; }
 		public DbSet<Venta> Ventas { get; set; }
 		public DbSet<VentaProducto> VentaProductos { get; set; }
-		
+
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
-			
+
+			// Categoria
 			modelBuilder.Entity<Categoria>(entity =>
 			{
+				entity.ToTable("Categorias");
+
 				entity.HasKey(e => e.Id);
-				entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+				entity.Property(e => e.Name)
+					  .IsRequired()
+					  .HasMaxLength(100);
+
+				entity.HasIndex(e => e.Name)
+						.IsUnique();
+
+				entity.HasMany(c => c.Productos)
+					  .WithOne(p => p.Categoria)
+					  .HasForeignKey(p => p.CategoriaId)
+					  .OnDelete(DeleteBehavior.Cascade);
 			});
 
-			modelBuilder.Entity<Categoria>().ToTable("Categorias");
-
+			// Producto
 			modelBuilder.Entity<Producto>(entity =>
 			{
+				entity.ToTable("Productos");
+
 				entity.HasKey(e => e.Id);
-				entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-				entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
-				entity.Property(e => e.Stock).IsRequired();
-				entity.HasOne<Categoria>()
-					.WithMany()
-					.HasForeignKey(e => e.CategoriaId)
-					.OnDelete(DeleteBehavior.Cascade);
+				entity.Property(e => e.Name)
+					  .IsRequired()
+					  .HasMaxLength(100);
+
+				entity.HasIndex(e => e.Name)
+						.IsUnique();
+
+				entity.Property(e => e.Price)
+					  .HasColumnType("decimal(18,2)");
+
+				entity.Property(e => e.Stock)
+					  .IsRequired();
 			});
 
-			modelBuilder.Entity<Producto>().ToTable("Productos");
-
+			// Venta
 			modelBuilder.Entity<Venta>(entity =>
 			{
+				entity.ToTable("Ventas");
+
 				entity.HasKey(e => e.Id);
 				entity.Property(e => e.Date).IsRequired();
 			});
 
-			modelBuilder.Entity<Venta>().ToTable("Ventas");
+			// VentaProducto (Many to Many con entidad intermedia)
+			modelBuilder.Entity<VentaProducto>(entity =>
+			{
+				entity.ToTable("VentaProducto");
 
-			modelBuilder.Entity<VentaProducto>()
-			.HasKey(vp => new { vp.VentaId, vp.ProductoId });
+				entity.HasKey(vp => new { vp.VentaId, vp.ProductoId });
 
-			modelBuilder.Entity<VentaProducto>()
-				.HasOne(vp => vp.Venta)
-				.WithMany(v => v.VentaProductos)
-				.HasForeignKey(vp => vp.VentaId);
+				entity.HasOne(vp => vp.Venta)
+					  .WithMany(v => v.VentaProductos)
+					  .HasForeignKey(vp => vp.VentaId);
 
-			modelBuilder.Entity<VentaProducto>()
-				.HasOne(vp => vp.Producto)
-				.WithMany(p => p.VentaProductos)
-				.HasForeignKey(vp => vp.ProductoId);
-
-			modelBuilder.Entity<VentaProducto>().ToTable("VentaProducto");
+				entity.HasOne(vp => vp.Producto)
+					  .WithMany(p => p.VentaProductos)
+					  .HasForeignKey(vp => vp.ProductoId);
+			});
 		}
 
 	}

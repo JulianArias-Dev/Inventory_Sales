@@ -1,7 +1,5 @@
 ﻿using API.DTOs;
-using API.Models;
 using API.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -31,40 +29,24 @@ namespace API.Controllers
 		public async Task<ActionResult> GetVentaById(int saleId)
 		{
 			var venta = await _service.GetOneAsync(saleId);
-			
+
 			if (venta == null)
 				return NotFound();
-			
+
 			return Ok(venta);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<Venta>> CreateVenta([FromBody] CreateVentaDto dto)
+		public async Task<ActionResult<VentaResponseDto>> CreateVenta([FromBody] CreateVentaDto dto)
 		{
-			if (!ModelState.IsValid)
-				return BadRequest(ModelState);
-
-			var venta = new Venta
-			{
-				CustomerName = dto.CustomerName,
-				Date = dto.Date
-			};
-
-			var productos = dto.Productos.Select(p => new VentaProducto
-			{
-				ProductoId = p.ProductoId,
-				Cantidad = p.Cantidad,
-				PrecioUnitario = p.PrecioUnitario
-			}).ToList();
-
-			var newVenta = await _service.Create(venta, productos);
+			var newVenta = await _service.Create(dto);
 
 			if (newVenta == null)
-				return BadRequest("No se pudo crear la venta.");
+				return BadRequest();
 
 			return CreatedAtAction(
 				nameof(GetVentaById),
-				new { id = newVenta.Id },
+				new { saleId = newVenta.Id },
 				newVenta
 			);
 		}

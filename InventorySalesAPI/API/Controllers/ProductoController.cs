@@ -1,6 +1,6 @@
-﻿using API.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using API.DTOs;
 using API.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
@@ -16,14 +16,14 @@ namespace API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult> GetProducts()
+		public async Task<ActionResult<List<ProductoResponseDto>>>	 GetProducts()
 		{
 			var productos = await _service.GetAsync();
 			return Ok(productos);
 		}
 
 		[HttpGet("{productId}")]
-		public async Task<ActionResult<Producto>> GetProductById(int productId)
+		public async Task<ActionResult<ProductoResponseDto>> GetProductById(int productId)
 		{
 			var product = await _service.GetOneAsync(productId);
 
@@ -34,18 +34,25 @@ namespace API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<Producto>> CreateProduct([FromBody] Producto producto)
+		public async Task<ActionResult<ProductoResponseDto>> CreateProduct([FromBody] CreateProductoDto dto)
 		{
-			if (!ModelState.IsValid)
-				return BadRequest(ModelState);
+			try
+			{
+				if (!ModelState.IsValid)
+					return BadRequest(ModelState);
 
-			var newProduct = await _service.Create(producto);
+				var newProduct = await _service.Create(dto);
 
-			return CreatedAtAction(
-				nameof(GetProductById),           
-				new { id = newProduct.Id },
-				newProduct
-			);
+				return CreatedAtAction(
+					nameof(GetProductById),
+					new { productId = newProduct.Id },
+					newProduct
+				);
+			}
+			catch (InvalidOperationException ex)
+			{
+				return Conflict(new { message = ex.Message });
+			}
 		}
 
 		[HttpDelete("{productId}")]
@@ -60,9 +67,9 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{productId}")]
-		public async Task<IActionResult> UpdateProduct(int productId, Producto producto)
+		public async Task<ActionResult<ProductoResponseDto>> UpdateProduct(int productId, [FromBody] UpdateProductoDto dto)
 		{
-			var updated = await _service.Update(productId, producto);
+			var updated = await _service.Update(productId, dto);
 
 			if (updated == null)
 				return NotFound();
