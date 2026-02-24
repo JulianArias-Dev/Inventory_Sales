@@ -22,6 +22,9 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<VentasRep>();
 builder.Services.AddScoped<VentasServices>();
 
+builder.Services.AddScoped<ReportesRep>();
+builder.Services.AddScoped<ReportServices>();
+
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

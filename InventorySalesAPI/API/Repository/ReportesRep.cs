@@ -9,16 +9,23 @@ namespace API.Repository
 	{
 		public async Task<List<SalesReportDto>> GetVentasPorDiaAsync()
 		{
-			return await _context.Ventas
+			var data = await _context.Ventas
 				.GroupBy(v => v.Date.Date)
-				.Select(g => new SalesReportDto
+				.Select(g => new
 				{
-					fecha = g.Key.ToString("yyyy-MM-dd"),
-					cantidad = g.Count(),
-					total = g.Sum(x => x.TotalAmount)
+					Fecha = g.Key,
+					Cantidad = g.Count(),
+					Total = g.Sum(x => x.TotalAmount)
 				})
-				.OrderBy(x => x.fecha)
+				.OrderBy(x => x.Fecha)
 				.ToListAsync();
+
+			return data.Select(x => new SalesReportDto
+			{
+				fecha = x.Fecha.ToString("yyyy-MM-dd"),
+				cantidad = x.Cantidad,
+				total = x.Total
+			}).ToList();
 		}
 
 		public ReportesRep(AppDbContext context) : base(context) { }
