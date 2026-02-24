@@ -5,7 +5,7 @@ namespace API.DTOs
 	
 	public class CreateProductoDto
 	{
-		public string Name { get; set; }
+		public required string Name { get; set; }
 		public decimal Price { get; set; }
 		public int Stock { get; set; }
 		public int CategoriaId { get; set; }
@@ -14,7 +14,7 @@ namespace API.DTOs
 	public class ProductoResponseDto
 	{
 		public int Id { get; set; }
-		public string Name { get; set; }
+		public required string Name { get; set; }
 		public decimal Price { get; set; }
 		public int Stock { get; set; }
 		public int categoria { get; set; }
