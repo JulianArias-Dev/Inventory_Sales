@@ -39,16 +39,23 @@ namespace API.Controllers
 		[HttpPost]
 		public async Task<ActionResult<VentaResponseDto>> CreateVenta([FromBody] CreateVentaDto dto)
 		{
-			var newVenta = await _service.Create(dto);
+			try
+			{
+				var newVenta = await _service.Create(dto);
 
-			if (newVenta == null)
-				return BadRequest();
+				if (newVenta == null)
+					return BadRequest();
 
-			return CreatedAtAction(
-				nameof(GetVentaById),
-				new { saleId = newVenta.Id },
-				newVenta
-			);
+				return CreatedAtAction(
+					nameof(GetVentaById),
+					new { saleId = newVenta.Id },
+					newVenta
+				);
+			}
+			catch (InvalidOperationException ex)
+			{
+				return Conflict(new { message = ex.Message });
+			}
 		}
 	}
 }

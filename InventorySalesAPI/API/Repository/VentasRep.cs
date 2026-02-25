@@ -1,6 +1,7 @@
 ﻿using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace API.Repository
 {
@@ -37,6 +38,11 @@ namespace API.Repository
 			return await _context.Productos
 				.Where(p => ids.Contains(p.Id))
 				.ToListAsync();
+		}
+
+		public async Task<IDbContextTransaction> InitTransactionAsync()
+		{
+			return await _context.Database.BeginTransactionAsync();
 		}
 	}
 }

@@ -39,15 +39,15 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseExceptionHandler("/error");
+//app.UseExceptionHandler("/error");
 
-app.Map("/error", (HttpContext context) =>
-{
-	return Results.Problem(
-		title: "An unexpected error occurred.",
-		statusCode: 500
-	);
-});
+//app.Map("/error", (HttpContext context) =>
+//{
+//	return Results.Problem(
+//		title: "An unexpected error occurred.",
+//		statusCode: 500
+//	);
+//});
 
 app.UseAuthorization();
 

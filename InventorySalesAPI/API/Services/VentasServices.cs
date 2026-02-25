@@ -55,56 +55,79 @@ namespace API.Services
 
 		public async Task<VentaResponseDto?> Create(CreateVentaDto dto)
 		{
-			var venta = new Venta
+			await using var transaction = await _repository.InitTransactionAsync();
+
+			try
 			{
-				CustomerName = dto.CustomerName,
-				Date = DateTime.UtcNow
-			};
-
-			// Obtener todos los IDs solicitados
-			var productIds = dto.Productos.Select(p => p.ProductoId).ToList();
-
-			// Traer productos desde BD en una sola consulta
-			var productosDb = await _repository.GetByIdsAsync(productIds);
-
-			if (productosDb.Count != productIds.Count)
-				throw new InvalidOperationException("Uno o más productos no existen.");
-
-			foreach (var item in dto.Productos)
-			{
-				var productoDb = productosDb.First(p => p.Id == item.ProductoId);
-
-				var precioReal = productoDb.Price;
-
-				venta.TotalAmount += item.Cantidad * precioReal;
-
-				venta.VentaProductos.Add(new VentaProducto
+				var venta = new Venta
 				{
-					ProductoId = productoDb.Id,
-					Cantidad = item.Cantidad,
-					PrecioUnitario = precioReal
-				});
+					CustomerName = dto.CustomerName,
+					Date = DateTime.UtcNow
+				};
+
+				// Obtener todos los IDs solicitados
+				var productIds = dto.Productos.Select(p => p.ProductoId).ToList();
+
+				// Traer productos desde BD en una sola consulta
+				var productosDb = await _repository.GetByIdsAsync(productIds);
+
+				if (productosDb.Count != productIds.Count)
+					throw new InvalidOperationException("Uno o más productos no existen.");
+
+				var productosDict = productosDb.ToDictionary(p => p.Id);
+
+				foreach (var item in dto.Productos)
+				{
+					var productoDb = productosDict[item.ProductoId];
+
+					// Validar Stock
+					if (productoDb.Stock < item.Cantidad)
+						throw new InvalidOperationException(
+							$"Stock insuficiente para el producto {productoDb.Name}"
+						);
+
+					var precioReal = productoDb.Price;
+
+					venta.TotalAmount += item.Cantidad * precioReal;
+
+					venta.VentaProductos.Add(new VentaProducto
+					{
+						ProductoId = productoDb.Id,
+						Cantidad = item.Cantidad,
+						PrecioUnitario = precioReal
+					});
+
+					// Descontar stock
+					productoDb.Stock -= item.Cantidad;
+				}
+
+				var saved = await _repository.Create(venta);
+
+				//  Confirmar transacción
+				await transaction.CommitAsync();
+
+				if (saved == null) return null;
+
+				return new VentaResponseDto
+				{
+					Id = saved.Id,
+					Date = saved.Date,
+					TotalAmount = saved.TotalAmount,
+					CustomerName = saved.CustomerName,
+					Productos = saved.VentaProductos.Select(vp => new VentaProductoDto
+					{
+						ProductoId = vp.ProductoId,
+						ProductoNombre = productosDict[vp.ProductoId].Name,
+						Cantidad = vp.Cantidad,
+						PrecioUnitario = vp.PrecioUnitario
+					}).ToList()
+				};
 			}
-
-			var saved = await _repository.Create(venta);
-
-			if (saved == null)
-				return null;
-
-			return new VentaResponseDto
+			catch
 			{
-				Id = saved.Id,
-				Date = saved.Date,
-				TotalAmount = saved.TotalAmount,
-				CustomerName = saved.CustomerName,
-				Productos = saved.VentaProductos.Select(vp => new VentaProductoDto
-				{
-					ProductoId = vp.ProductoId,
-					ProductoNombre = productosDb.First(p => p.Id == vp.ProductoId).Name,
-					Cantidad = vp.Cantidad,
-					PrecioUnitario = vp.PrecioUnitario
-				}).ToList()
-			};
+				await transaction.RollbackAsync();
+				throw;
+			}
 		}
 	}
 }
