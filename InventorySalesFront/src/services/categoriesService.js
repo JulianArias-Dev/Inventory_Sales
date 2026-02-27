@@ -1,107 +1,123 @@
-// Datos estáticos de prueba
-const categorias = [
-  { _id: '1', nombre: 'Electrónica' },
-  { _id: '2', nombre: 'Ropa' },
-  { _id: '3', nombre: 'Hogar' },
-  { _id: '4', nombre: 'Deportes' }
-];
-
-// Simulamos productos asociados a categorías
-const productosPorCategoria = {
-  '1': ['Smart TV 55"', 'Laptop Gaming'], // Electrónica tiene productos
-  '2': ['Camisa Polo'], // Ropa tiene productos
-  '3': [], // Hogar no tiene productos
-  '4': [] // Deportes no tiene productos
-};
-
-// Simular operaciones asíncronas
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const API_URL = 'http://localhost:5232/api'; // Ajusta el puerto según tu backend
 
 export const categoriaService = {
   // Obtener todas las categorías
   async getAll() {
-    await delay(500);
-    return [...categorias];
+    try {
+      const response = await fetch(`${API_URL}/Categoria`);
+      if (!response.ok) throw new Error('Error al cargar las categorías');
+      return await response.json();
+    } catch (error) {
+      console.error('Error en getAll:', error);
+      throw error;
+    }
   },
 
   // Obtener categoría por ID
   async getById(id) {
-    await delay(300);
-    const categoria = categorias.find(c => c._id === id);
-    if (!categoria) throw new Error('Categoría no encontrada');
-    return { ...categoria };
-  },
-
-  // Verificar si una categoría tiene productos
-  async tieneProductos(id) {
-    await delay(200);
-    return productosPorCategoria[id] && productosPorCategoria[id].length > 0;
+    try {
+      const response = await fetch(`${API_URL}/Categoria/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Categoría no encontrada');
+        throw new Error('Error al cargar la categoría');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error en getById:', error);
+      throw error;
+    }
   },
 
   // Crear nueva categoría
   async create(categoriaData) {
-    await delay(500);
-    
-    // Validar que el nombre sea único
-    const nombreExistente = categorias.find(
-      c => c.nombre.toLowerCase() === categoriaData.nombre.toLowerCase()
-    );
-    
-    if (nombreExistente) {
-      throw new Error('Ya existe una categoría con ese nombre');
-    }
+    try {
+      const response = await fetch(`${API_URL}/Categoria`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nombre: categoriaData.nombre })
+      });
 
-    const nuevaCategoria = {
-      _id: String(Date.now()),
-      nombre: categoriaData.nombre
-    };
-    
-    categorias.push(nuevaCategoria);
-    // Inicializar su lista de productos como vacía
-    productosPorCategoria[nuevaCategoria._id] = [];
-    
-    return { ...nuevaCategoria };
+      if (!response.ok) {
+        if (response.status === 400) {
+          const error = await response.json();
+          throw new Error(error.message || 'Error al crear la categoría');
+        }
+        throw new Error('Error al crear la categoría');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en create:', error);
+      throw error;
+    }
   },
 
   // Actualizar categoría
   async update(id, categoriaData) {
-    await delay(500);
-    
-    const index = categorias.findIndex(c => c._id === id);
-    if (index === -1) throw new Error('Categoría no encontrada');
+    try {
+      const response = await fetch(`${API_URL}/Categoria/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: parseInt(id),
+          nombre: categoriaData.nombre
+        })
+      });
 
-    // Validar que el nuevo nombre sea único (excepto para la misma categoría)
-    const nombreExistente = categorias.find(
-      c => c._id !== id && c.nombre.toLowerCase() === categoriaData.nombre.toLowerCase()
-    );
-    
-    if (nombreExistente) {
-      throw new Error('Ya existe otra categoría con ese nombre');
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Categoría no encontrada');
+        if (response.status === 400) {
+          const error = await response.json();
+          throw new Error(error.message || 'Error al actualizar la categoría');
+        }
+        throw new Error('Error al actualizar la categoría');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en update:', error);
+      throw error;
     }
-
-    categorias[index] = {
-      ...categorias[index],
-      nombre: categoriaData.nombre
-    };
-
-    return { ...categorias[index] };
   },
 
   // Eliminar categoría
   async delete(id) {
-    await delay(500);
-    
-    // Verificar si la categoría tiene productos asociados
-    if (productosPorCategoria[id] && productosPorCategoria[id].length > 0) {
-      throw new Error('No se puede eliminar la categoría porque tiene productos asociados');
-    }
+    try {
+      const response = await fetch(`${API_URL}/Categoria/${id}`, {
+        method: 'DELETE'
+      });
 
-    const index = categorias.findIndex(c => c._id === id);
-    if (index === -1) throw new Error('Categoría no encontrada');
-    
-    categorias.splice(index, 1);
-    delete productosPorCategoria[id];
-    
-    return { success: true };
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Categoría no encontrada');
+        if (response.status === 400) {
+          // El backend probablemente devuelve un mensaje cuando tiene productos asociados
+          const error = await response.text();
+          throw new Error(error || 'No se puede eliminar la categoría porque tiene productos asociados');
+        }
+        throw new Error('Error al eliminar la categoría');
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error en delete:', error);
+      throw error;
+    }
+  },
+
+  // Verificar si una categoría tiene productos (si el backend tiene este endpoint)
+  async tieneProductos(id) {
+    try {
+      // Si el backend tiene un endpoint para verificar productos
+      const response = await fetch(`${API_URL}/Categoria/${id}/tiene-productos`);
+      if (!response.ok) return false;
+      return await response.json();
+    } catch (error) {
+      console.error('Error verificando productos:', error);
+      return false;
+    }
   }
 };
