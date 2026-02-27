@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import productService from '../services/productService';
+import * as productService from '../services/productService';
+import * as categoriaService from '../services/categoriesService';
 import '../styles/products.css';
 
 const Products = () => {
@@ -21,36 +22,56 @@ const Products = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Cargar categorías predefinidas
+  // Cargar categorías desde el backend al inicio
   useEffect(() => {
-    const categoriasPredefinidas = [
-      { _id: '1', nombre: 'Electrónica' },
-      { _id: '2', nombre: 'Ropa' },
-      { _id: '3', nombre: 'Hogar' },
-      { _id: '4', nombre: 'Deportes' }
-    ];
-    setCategorias(categoriasPredefinidas);
+    cargarCategorias();
   }, []);
 
+  // Cargar productos después de tener las categorías
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    if (categorias.length > 0) {
+      cargarProductos();
+    }
+  }, [categorias]);
 
-  const cargarDatos = async () => {
+  const cargarCategorias = async () => {
+    try {
+      setLoading(true);
+      const data = await categoriaService.getAll();
+      // Transformar al formato que usa el frontend
+      const categoriasTransformadas = data.map(cat => ({
+        _id: cat.id.toString(),
+        nombre: cat.nombre
+      }));
+      setCategorias(categoriasTransformadas);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      setError('Error al cargar las categorías');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarProductos = async () => {
     try {
       setLoading(true);
       const data = await productService.getAll();
-      // Transformar los datos para mantener compatibilidad con el formato anterior
-      const productosTransformados = data.map(producto => ({
-        _id: producto.id,
-        nombre: producto.name,
-        precio: producto.price,
-        stock: producto.stock,
-        categoria: {
-          _id: producto.categoria,
-          nombre: getNombreCategoria(producto.categoria)
-        }
-      }));
+      
+      // Enriquecer los productos con la información completa de categoría
+      const productosTransformados = data.map(producto => {
+        const categoriaEncontrada = categorias.find(c => c._id === producto.categoria?.toString());
+        return {
+          _id: producto.id,
+          nombre: producto.name,
+          precio: producto.price,
+          stock: producto.stock,
+          categoria: categoriaEncontrada || { 
+            _id: producto.categoria?.toString() || '0', 
+            nombre: 'Sin categoría' 
+          }
+        };
+      });
+      
       setProductos(productosTransformados);
     } catch (error) {
       setError('Error al cargar los productos');
@@ -60,14 +81,9 @@ const Products = () => {
     }
   };
 
-  const getNombreCategoria = (categoriaId) => {
-    const categoriasMap = {
-      '1': 'Electrónica',
-      '2': 'Ropa',
-      '3': 'Hogar',
-      '4': 'Deportes'
-    };
-    return categoriasMap[categoriaId] || 'Sin categoría';
+  const obtenerNombreCategoria = (categoriaId) => {
+    const categoria = categorias.find(c => c._id === categoriaId?.toString());
+    return categoria ? categoria.nombre : 'Sin categoría';
   };
 
   const handleShowModal = (type, producto = null) => {
@@ -119,32 +135,42 @@ const Products = () => {
     try {
       if (modalType === 'crear') {
         const nuevoProducto = await productService.create(formData);
+        
+        // Buscar la categoría seleccionada
+        const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
+        
         // Transformar respuesta
         const productoTransformado = {
           _id: nuevoProducto.id,
           nombre: nuevoProducto.name,
           precio: nuevoProducto.price,
           stock: nuevoProducto.stock,
-          categoria: {
-            _id: nuevoProducto.categoria,
-            nombre: getNombreCategoria(nuevoProducto.categoria)
+          categoria: categoriaSeleccionada || {
+            _id: formData.categoria,
+            nombre: obtenerNombreCategoria(formData.categoria)
           }
         };
+        
         setProductos([...productos, productoTransformado]);
         setSuccess('Producto creado exitosamente');
       } else if (modalType === 'editar' && selectedProducto) {
         const productoActualizado = await productService.update(selectedProducto._id, formData);
+        
+        // Buscar la categoría seleccionada
+        const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
+        
         // Transformar respuesta
         const productoTransformado = {
           _id: productoActualizado.id,
           nombre: productoActualizado.name,
           precio: productoActualizado.price,
           stock: productoActualizado.stock,
-          categoria: {
-            _id: productoActualizado.categoria,
-            nombre: getNombreCategoria(productoActualizado.categoria)
+          categoria: categoriaSeleccionada || {
+            _id: formData.categoria,
+            nombre: obtenerNombreCategoria(formData.categoria)
           }
         };
+        
         setProductos(productos.map(p => p._id === selectedProducto._id ? productoTransformado : p));
         setSuccess('Producto actualizado exitosamente');
       }
@@ -171,15 +197,15 @@ const Products = () => {
         categoria: selectedProducto.categoria._id
       });
 
+      // Buscar la categoría del producto
+      const categoriaProducto = categorias.find(c => c._id === selectedProducto.categoria._id);
+
       const productoTransformado = {
         _id: productoActualizado.id,
         nombre: productoActualizado.name,
         precio: productoActualizado.price,
         stock: productoActualizado.stock,
-        categoria: {
-          _id: productoActualizado.categoria,
-          nombre: getNombreCategoria(productoActualizado.categoria)
-        }
+        categoria: categoriaProducto || selectedProducto.categoria
       };
 
       setProductos(productos.map(p => p._id === selectedProducto._id ? productoTransformado : p));
@@ -207,7 +233,7 @@ const Products = () => {
   const filtrarProductos = () => {
     return productos.filter(producto =>
       producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      producto.categoria.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      (producto.categoria?.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -224,7 +250,7 @@ const Products = () => {
       'Hogar': 'bi-house-heart',
       'Deportes': 'bi-trophy'
     };
-    return iconos[categoria.nombre] || 'bi-box';
+    return iconos[categoria?.nombre] || 'bi-box';
   };
 
   const totalProductos = productos.length;
@@ -382,7 +408,7 @@ const Products = () => {
                     <h6 className="mb-1">{selectedProducto.nombre}</h6>
                     <p className="mb-0 text-muted">
                       <i className="bi bi-folder me-1"></i>
-                      {selectedProducto.categoria.nombre}
+                      {selectedProducto.categoria?.nombre || 'Sin categoría'}
                     </p>
                   </div>
                 </div>
@@ -589,7 +615,7 @@ const Products = () => {
                         <td data-label="Categoría">
                           <span className="category-badge">
                             <i className="bi bi-folder me-1"></i>
-                            {producto.categoria.nombre}
+                            {producto.categoria?.nombre || 'Sin categoría'}
                           </span>
                         </td>
                         <td data-label="Precio" className="price-cell">
