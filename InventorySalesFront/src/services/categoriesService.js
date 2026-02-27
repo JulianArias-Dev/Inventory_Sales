@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5232/api'; // Ajusta el puerto según tu backend
+const API_URL = 'http://localhost:5000/api'; // Ajusta el puerto según tu backend
 
 export const categoriaService = {
   // Obtener todas las categorías
