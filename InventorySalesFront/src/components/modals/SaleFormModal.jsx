@@ -43,6 +43,21 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
         }
     };
 
+    const resetForm = () => {
+        setFormData({
+            customerName: '',
+            productos: []
+        });
+        setNuevoProducto({
+            productId: '',
+            cantidad: 1,
+            precio: 0,
+            nombre: ''
+        });
+        setError('');
+        setStep('form');
+    };
+
     const handleClienteChange = (e) => {
         setFormData({
             ...formData,
@@ -170,35 +185,20 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             setLoading(true);
             setError('');
 
-            if (!formData.customerName.trim()) {
-                throw new Error('El nombre del cliente es requerido');
-            }
-
-            if (formData.productos.length === 0) {
-                throw new Error('Debe agregar al menos un producto');
-            }
-
-            // Crear la estructura de datos
             const ventaData = {
                 customerName: formData.customerName.trim(),
                 productos: formData.productos.map(p => ({
-                    productoId: p.productId, // Esto se mapeará en el servicio a ProductoId
-                    cantidad: p.cantidad // Esto se mapeará en el servicio a Cantidad
+                    productoId: p.productId,
+                    cantidad: p.cantidad
                 }))
             };
 
-            console.log('Datos preparados:', ventaData);
+            console.log('Enviando venta:', ventaData);
 
             await salesService.createVenta(ventaData);
 
-            setFormData({
-                customerName: '',
-                productos: []
-            });
-            setStep('form');
-
-            if (onSuccess) onSuccess();
-            onClose();
+            resetForm(); // Limpiar todo
+            onSuccess(); // Notificar éxito y cerrar
         } catch (error) {
             console.error('Error en handleConfirm:', error);
             setError(error.message || 'Error al registrar la venta');
@@ -209,14 +209,21 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
     const handleCancel = () => {
         if (step === 'confirm') {
-            setStep('form');
+            // Si estamos en confirmación, volvemos al formulario
+            // setStep('form');
+            if (window.confirm('¿Está seguro que desea cancelar la venta?')) {
+                resetForm();
+                onClose();
+            }
         } else {
+            // Si estamos en el formulario, preguntamos si hay datos
             if (formData.productos.length > 0 || formData.customerName) {
                 if (window.confirm('¿Está seguro que desea cancelar? Los datos ingresados se perderán.')) {
-                    onClose();
+                    resetForm();
+                    onClose(); // Cerrar el modal completamente
                 }
             } else {
-                onClose();
+                onClose(); // Cerrar directamente si no hay datos
             }
         }
     };

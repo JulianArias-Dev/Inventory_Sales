@@ -20,10 +20,11 @@ const Sales = () => {
         totalIngresos: 0,
         promedioVentas: 0
     });
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
         cargarVentas();
-    }, []);
+    }, [refreshTrigger]); // Recargar cuando cambie el trigger
 
     const cargarVentas = async () => {
         try {
@@ -62,9 +63,18 @@ const Sales = () => {
         setSelectedVentaId(null);
     };
 
+    const handleOpenForm = () => {
+        setShowModal(true);
+    };
+
+    const handleCloseForm = () => {
+        setShowModal(false);
+    };
+
     const handleSuccess = () => {
+        setShowModal(false);
         setSuccess('Venta registrada exitosamente');
-        cargarVentas();
+        setRefreshTrigger(prev => prev + 1); // Forzar recarga de la tabla
         setTimeout(() => setSuccess(''), 3000);
     };
 
@@ -82,9 +92,9 @@ const Sales = () => {
                         </Col>
                         <Col xs="auto">
                             <Button
-                                variant="light"
+                                variant="primary"
                                 className="d-flex align-items-center gap-2"
-                                onClick={() => setShowModal(true)}
+                                onClick={handleOpenForm}
                             >
                                 <i className="bi bi-plus-lg"></i>
                                 Nueva Venta
@@ -134,14 +144,14 @@ const Sales = () => {
 
                 {/* Alerts */}
                 {error && (
-                    <Alert variant="danger" className="custom-alert">
+                    <Alert variant="danger" className="custom-alert" onClose={() => setError('')} dismissible>
                         <i className="bi bi-exclamation-triangle-fill me-2"></i>
                         {error}
                     </Alert>
                 )}
 
                 {success && (
-                    <Alert variant="success" className="custom-alert">
+                    <Alert variant="success" className="custom-alert" onClose={() => setSuccess('')} dismissible>
                         <i className="bi bi-check-circle-fill me-2"></i>
                         {success}
                     </Alert>
@@ -157,7 +167,7 @@ const Sales = () => {
                 {/* Modal de nueva venta */}
                 {showModal && (
                     <SaleFormModal
-                        onClose={() => setShowModal(false)}
+                        onClose={handleCloseForm}
                         onSuccess={handleSuccess}
                     />
                 )}

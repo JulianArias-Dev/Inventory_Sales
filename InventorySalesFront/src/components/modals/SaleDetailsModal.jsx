@@ -208,7 +208,7 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
                         Imprimir Factura
                     </button>
                     <button className="btn-primary" onClick={onClose}>
-                        <i className="bi bi-check-lg"></i>
+                        <i className="bi bi-x-lg me-2"></i>
                         Cerrar
                     </button>
                 </div>

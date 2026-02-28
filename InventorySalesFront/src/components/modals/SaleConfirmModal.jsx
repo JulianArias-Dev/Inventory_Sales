@@ -14,15 +14,29 @@ const SaleConfirmModal = ({
 
     const { cliente, productos, total } = data;
 
+    const handleCancel = () => {
+        // Llamar a onClose que viene del SaleFormModal y cerrará todo
+        onClose();
+    };
+
+    const handleEdit = () => {
+        onEdit(); // Volver al formulario
+    };
+
     return (
-        <div className="sale-modal-overlay" onClick={onClose}>
+        <div className="sale-modal-overlay" onClick={handleCancel}>
             <div className="sale-modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h5 className="modal-title">
                         <i className="bi bi-check-circle me-2"></i>
                         Confirmar Venta
                     </h5>
-                    <button type="button" className="btn-close" onClick={onClose}></button>
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={handleCancel}
+                        disabled={loading}
+                    ></button>
                 </div>
 
                 <div className="modal-body">
@@ -80,18 +94,20 @@ const SaleConfirmModal = ({
                     <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={onEdit}
+                        onClick={handleEdit}
+                        disabled={loading}
                     >
                         <i className="bi bi-pencil me-2"></i>
                         Editar Venta
                     </button>
                     <button
                         type="button"
-                        className="btn btn-secondary"
-                        onClick={onClose}
+                        className="btn btn-danger"
+                        onClick={handleCancel}
+                        disabled={loading}
                     >
                         <i className="bi bi-x-lg me-2"></i>
-                        Cancelar
+                        Cancelar Venta
                     </button>
                     <button
                         type="button"

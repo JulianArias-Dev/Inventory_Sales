@@ -30,11 +30,11 @@ const SalesTable = ({ ventas, onViewDetails, loading }) => {
             <table className="sales-table">
                 <thead>
                     <tr>
-                        <th style={{ width: '80px' }}>ID</th>
-                        <th style={{ width: '120px' }}>Fecha</th>
-                        <th style={{ width: '200px' }}>Cliente</th>
-                        <th style={{ width: '100px' }}>Total</th>
-                        <th style={{ width: '100px' }}>Acciones</th>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,7 +59,7 @@ const SalesTable = ({ ventas, onViewDetails, loading }) => {
                                         <i className="bi bi-person"></i>
                                     </div>
                                     <div className="customer-details">
-                                        <span className="customer-name">{venta.customerName}</span>
+                                        <span className="customer-name">{venta.customerName || 'Sin nombre'}</span>
                                     </div>
                                 </div>
                             </td>
