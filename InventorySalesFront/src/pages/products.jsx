@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import * as productService from '../services/productService';
-import  {categoriaService} from '../services/categoriesService';
+import {productService} from '../services/productService';
+import {categoriaService} from '../services/categoriesService';
 import '../styles/products.css';
 
 const Products = () => {
