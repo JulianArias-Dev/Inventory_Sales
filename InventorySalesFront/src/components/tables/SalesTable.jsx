@@ -30,20 +30,20 @@ const SalesTable = ({ ventas, onViewDetails, loading }) => {
             <table className="sales-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Acciones</th>
+                        <th style={{ width: '80px' }}>ID</th>
+                        <th style={{ width: '120px' }}>Fecha</th>
+                        <th style={{ width: '200px' }}>Cliente</th>
+                        <th style={{ width: '100px' }}>Total</th>
+                        <th style={{ width: '100px' }}>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {ventas.map((venta) => (
                         <tr key={venta.id}>
-                            <td data-label="ID">
+                            <td>
                                 <span className="sale-id-badge">#{venta.id}</span>
                             </td>
-                            <td data-label="Fecha">
+                            <td>
                                 <div className="date-cell">
                                     <i className="bi bi-calendar3"></i>
                                     {new Date(venta.date).toLocaleDateString('es-ES', {
@@ -53,23 +53,20 @@ const SalesTable = ({ ventas, onViewDetails, loading }) => {
                                     })}
                                 </div>
                             </td>
-                            <td data-label="Cliente">
+                            <td>
                                 <div className="customer-info">
                                     <div className="customer-avatar">
                                         <i className="bi bi-person"></i>
                                     </div>
                                     <div className="customer-details">
                                         <span className="customer-name">{venta.customerName}</span>
-                                        {venta.customerEmail && (
-                                            <span className="customer-email">{venta.customerEmail}</span>
-                                        )}
                                     </div>
                                 </div>
                             </td>
-                            <td data-label="Total" className="amount-cell">
+                            <td className="amount-cell">
                                 ${venta.totalAmount?.toFixed(2) || '0.00'}
                             </td>
-                            <td data-label="Acciones">
+                            <td>
                                 <div className="action-buttons">
                                     <button
                                         className="btn-action btn-view"
@@ -78,13 +75,6 @@ const SalesTable = ({ ventas, onViewDetails, loading }) => {
                                     >
                                         <i className="bi bi-eye"></i>
                                         Detalle
-                                    </button>
-                                    <button
-                                        className="btn-action btn-print"
-                                        onClick={() => window.print()} // Aquí puedes implementar la lógica de impresión
-                                        title="Imprimir factura"
-                                    >
-                                        <i className="bi bi-printer"></i>
                                     </button>
                                 </div>
                             </td>

@@ -16,12 +16,25 @@ const salesService = {
     // Obtener venta por ID
     getVentaById: async (id) => {
         try {
+            console.log('Obteniendo venta ID:', id);
             const response = await fetch(`${API_URL}/Ventas/${id}`);
-            if (!response.ok) {
-                if (response.status === 404) throw new Error('Venta no encontrada');
-                throw new Error('Error al cargar la venta');
+
+            const responseText = await response.text();
+            console.log('Respuesta del servidor:', responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                data = { message: responseText };
             }
-            return await response.json();
+
+            if (!response.ok) {
+                console.error('Error del servidor:', response.status, data);
+                throw new Error(data.message || `Error ${response.status}: ${responseText}`);
+            }
+
+            return data;
         } catch (error) {
             console.error('Error en getVentaById:', error);
             throw error;
@@ -31,12 +44,11 @@ const salesService = {
     // Crear nueva venta
     createVenta: async (ventaData) => {
         try {
-            // IMPORTANTE: El DTO espera ProductoId con P mayúscula
             const dataToSend = {
                 customerName: ventaData.customerName,
                 productos: ventaData.productos.map(p => ({
-                    ProductoId: Number(p.productoId), // Con P mayúscula!
-                    Cantidad: Number(p.cantidad) // Con C mayúscula!
+                    ProductoId: Number(p.productoId),
+                    Cantidad: Number(p.cantidad)
                 }))
             };
 

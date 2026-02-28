@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import salesService from "../../services/salesService";
 import '../../styles/salesDetailsModal.css';
 
@@ -6,27 +6,54 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
     const [venta, setVenta] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const printRef = useRef();
 
     useEffect(() => {
         const loadVenta = async () => {
             try {
                 setLoading(true);
-                const data = await getVentaById(ventaId);
+                console.log('Cargando venta ID:', ventaId);
+                const data = await salesService.getVentaById(ventaId);
+                console.log('Venta cargada:', data);
                 setVenta(data);
                 setError("");
             } catch (error) {
-                console.error(error);
-                setError("Error al cargar los detalles de la venta");
+                console.error('Error cargando venta:', error);
+                setError(error.message || "Error al cargar los detalles de la venta");
             } finally {
                 setLoading(false);
             }
         };
 
-        loadVenta();
+        if (ventaId) {
+            loadVenta();
+        }
     }, [ventaId]);
 
     const handlePrint = () => {
+        const printContent = printRef.current;
+        const originalContent = document.body.innerHTML;
+
+        // Crear un estilo específico para impresión
+        const printStyles = `
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .invoice-header { margin-bottom: 20px; border-bottom: 2px solid #333; }
+                .customer-info-card { margin-bottom: 20px; }
+                .products-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                .products-table th, .products-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                .products-table th { background-color: #f2f2f2; }
+                .totals-section { border-top: 2px solid #333; padding-top: 10px; }
+                .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                .total-row.final { font-weight: bold; font-size: 1.2em; border-top: 1px solid #333; padding-top: 5px; }
+                .no-print { display: none; }
+            </style>
+        `;
+
+        document.body.innerHTML = printStyles + printContent.outerHTML;
         window.print();
+        document.body.innerHTML = originalContent;
+        window.location.reload(); // Recargar para restaurar la funcionalidad
     };
 
     if (loading) {
@@ -94,12 +121,12 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
                     <button className="btn-close" onClick={onClose}>×</button>
                 </div>
 
-                <div className="modal-body">
+                <div className="modal-body" ref={printRef}>
                     {/* Invoice Header */}
                     <div className="invoice-header">
                         <div className="invoice-id">
                             <i className="bi bi-upc-scan"></i>
-                            #{venta.id}
+                            # {venta.id}
                         </div>
                         <div className="invoice-date">
                             <i className="bi bi-calendar3"></i>
@@ -150,7 +177,7 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
                                             </div>
                                         </td>
                                         <td>{p.cantidad}</td>
-                                        <td>${p.precioUnitario.toFixed(2)}</td>
+                                        <td>${p.precioUnitario?.toFixed(2) || '0.00'}</td>
                                         <td>${calcularSubtotal(p.cantidad, p.precioUnitario).toFixed(2)}</td>
                                     </tr>
                                 ))}
@@ -178,7 +205,7 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
                 <div className="modal-footer">
                     <button className="btn-secondary" onClick={handlePrint}>
                         <i className="bi bi-printer"></i>
-                        Imprimir
+                        Imprimir Factura
                     </button>
                     <button className="btn-primary" onClick={onClose}>
                         <i className="bi bi-check-lg"></i>
