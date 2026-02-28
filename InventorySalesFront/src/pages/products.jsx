@@ -7,8 +7,9 @@ const Products = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('crear'); // 'crear', 'editar', 'stock'
+  const [modalType, setModalType] = useState('crear');
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -24,42 +25,100 @@ const Products = () => {
 
   // Cargar categorías desde el backend al inicio
   useEffect(() => {
+    console.log('Iniciando carga de categorías...');
     cargarCategorias();
   }, []);
 
   // Cargar productos después de tener las categorías
   useEffect(() => {
-    if (categorias.length > 0) {
-      cargarProductos();
+    console.log('Estado de categorías actualizado:', { 
+      loadingCategorias, 
+      cantidadCategorias: categorias.length,
+      categorias: categorias 
+    });
+    
+    if (!loadingCategorias) {
+      if (categorias.length > 0) {
+        console.log('Categorías cargadas, procediendo a cargar productos...');
+        cargarProductos();
+      } else {
+        console.log('No hay categorías cargadas, mostrando lista vacía');
+        setLoading(false);
+      }
     }
-  }, [categorias]);
+  }, [loadingCategorias, categorias]);
 
   const cargarCategorias = async () => {
     try {
-      setLoading(true);
+      setLoadingCategorias(true);
+      console.log('1. Iniciando carga de categorías...');
+      
       const data = await categoriaService.getAll();
-      // Transformar al formato que usa el frontend
-      const categoriasTransformadas = data.map(cat => ({
-        _id: cat.id.toString(),
-        nombre: cat.nombre
-      }));
-      setCategorias(categoriasTransformadas);
+      console.log('2. Datos recibidos del backend:', data);
+      console.log('3. Tipo de datos:', Array.isArray(data) ? 'array' : typeof data);
+      console.log('4. Longitud:', data?.length);
+      
+      if (data && Array.isArray(data)) {
+        if (data.length > 0) {
+          console.log('5. Primer elemento:', data[0]);
+          console.log('6. Keys del primer elemento:', Object.keys(data[0]));
+          console.log('7. Valor de id:', data[0].id);
+          console.log('8. Valor de nombre:', data[0].nombre);
+          console.log('9. Tiene propiedad "id"?', 'id' in data[0]);
+          console.log('10. Tiene propiedad "Id"?', 'Id' in data[0]);
+          console.log('11. Tiene propiedad "_id"?', '_id' in data[0]);
+        }
+        
+        // Transformar al formato que usa el frontend
+        const categoriasTransformadas = data.map((cat, index) => {
+          // Intentar diferentes formas de obtener el ID
+          let idValue = null;
+          if (cat.id !== undefined) idValue = cat.id;
+          else if (cat.Id !== undefined) idValue = cat.Id;
+          else if (cat.ID !== undefined) idValue = cat.ID;
+          else if (cat._id !== undefined) idValue = cat._id;
+          
+          console.log(`Transformando categoría ${index}:`, {
+            original: cat,
+            idDetectado: idValue,
+            idTipo: typeof idValue,
+            nombreDetectado: cat.nombre || cat.Name || cat.Nombre
+          });
+          
+          return {
+            _id: idValue ? idValue.toString() : String(index + 1),
+            nombre: cat.nombre || cat.Name || cat.Nombre || 'Sin nombre'
+          };
+        });
+        
+        console.log('12. Categorías transformadas:', categoriasTransformadas);
+        setCategorias(categoriasTransformadas);
+      } else {
+        console.error('13. Error: data no es un array:', data);
+        setError('Error al cargar las categorías');
+      }
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
-      setError('Error al cargar las categorías');
+      console.error('14. Error en catch:', error);
+      setError('Error al cargar las categorías: ' + error.message);
     } finally {
-      setLoading(false);
+      setLoadingCategorias(false);
+      console.log('15. Carga de categorías finalizada');
     }
   };
 
   const cargarProductos = async () => {
     try {
       setLoading(true);
+      console.log('Cargando productos...');
       const data = await productService.getAll();
+      console.log('Productos recibidos:', data);
       
       // Enriquecer los productos con la información completa de categoría
       const productosTransformados = data.map(producto => {
+        console.log('Procesando producto:', producto);
         const categoriaEncontrada = categorias.find(c => c._id === producto.categoria?.toString());
+        console.log('Categoría encontrada para producto:', categoriaEncontrada);
+        
         return {
           _id: producto.id,
           nombre: producto.name,
@@ -67,26 +126,34 @@ const Products = () => {
           stock: producto.stock,
           categoria: categoriaEncontrada || { 
             _id: producto.categoria?.toString() || '0', 
-            nombre: 'Sin categoría' 
+            nombre: obtenerNombreCategoria(producto.categoria?.toString()) 
           }
         };
       });
       
+      console.log('Productos transformados:', productosTransformados);
       setProductos(productosTransformados);
     } catch (error) {
-      setError('Error al cargar los productos');
-      console.error(error);
+      console.error('Error al cargar productos:', error);
+      setError('Error al cargar los productos: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const obtenerNombreCategoria = (categoriaId) => {
-    const categoria = categorias.find(c => c._id === categoriaId?.toString());
+    if (!categoriaId) return 'Sin categoría';
+    const categoria = categorias.find(c => c._id === categoriaId.toString());
     return categoria ? categoria.nombre : 'Sin categoría';
   };
 
   const handleShowModal = (type, producto = null) => {
+    console.log('Abriendo modal. Estado actual de categorías:', {
+      categorias,
+      cantidad: categorias.length,
+      loadingCategorias
+    });
+    
     setModalType(type);
     setSelectedProducto(producto);
     setError('');
@@ -96,7 +163,7 @@ const Products = () => {
         name: '',
         price: '',
         stock: '',
-        categoria: ''
+        categoria: ''  // Vacío para que muestre "Seleccione una categoría"
       });
     } else if (type === 'editar' && producto) {
       setFormData({
@@ -134,10 +201,13 @@ const Products = () => {
 
     try {
       if (modalType === 'crear') {
+        console.log('Creando producto con datos:', formData);
         const nuevoProducto = await productService.create(formData);
+        console.log('Producto creado:', nuevoProducto);
         
         // Buscar la categoría seleccionada
         const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
+        console.log('Categoría seleccionada:', categoriaSeleccionada);
         
         // Transformar respuesta
         const productoTransformado = {
@@ -154,7 +224,9 @@ const Products = () => {
         setProductos([...productos, productoTransformado]);
         setSuccess('Producto creado exitosamente');
       } else if (modalType === 'editar' && selectedProducto) {
+        console.log('Actualizando producto:', selectedProducto._id, formData);
         const productoActualizado = await productService.update(selectedProducto._id, formData);
+        console.log('Producto actualizado:', productoActualizado);
         
         // Buscar la categoría seleccionada
         const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
@@ -178,6 +250,7 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error en submit:', error);
       setError(error.message || 'Error al guardar el producto');
     }
   };
@@ -189,6 +262,8 @@ const Products = () => {
       const nuevoStock = stockOperation === 'aumentar'
         ? selectedProducto.stock + stockCantidad
         : Math.max(0, selectedProducto.stock - stockCantidad);
+
+      console.log('Modificando stock:', selectedProducto._id, 'nuevo stock:', nuevoStock);
 
       const productoActualizado = await productService.update(selectedProducto._id, {
         name: selectedProducto.nombre,
@@ -213,6 +288,7 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error modificando stock:', error);
       setError(error.message);
     }
   };
@@ -221,11 +297,13 @@ const Products = () => {
     if (!window.confirm('¿Está seguro de eliminar este producto?')) return;
 
     try {
+      console.log('Eliminando producto:', id);
       await productService.delete(id);
       setProductos(productos.filter(p => p._id !== id));
       setSuccess('Producto eliminado exitosamente');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error eliminando producto:', error);
       setError(error.message);
     }
   };
@@ -305,20 +383,34 @@ const Products = () => {
                     <i className="bi bi-folder me-2"></i>
                     Categoría
                   </label>
-                  <select
-                    className="form-select"
-                    name="categoria"
-                    value={formData.categoria}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Seleccione una categoría</option>
-                    {categorias.map(cat => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.nombre}
-                      </option>
-                    ))}
-                  </select>
+                  {loadingCategorias ? (
+                    <div className="text-center py-2">
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                      </div>
+                      <span className="ms-2">Cargando categorías...</span>
+                    </div>
+                  ) : (
+                    <select
+                      className="form-select"
+                      name="categoria"
+                      value={formData.categoria}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Seleccione una categoría</option>
+                      {categorias.map(cat => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {categorias.length === 0 && !loadingCategorias && (
+                    <div className="alert alert-warning mt-2">
+                      No hay categorías disponibles. Crea una categoría primero en la sección de Categorías.
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-3">
@@ -364,7 +456,11 @@ const Products = () => {
                   <i className="bi bi-x-lg me-2"></i>
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={loadingCategorias || categorias.length === 0}
+                >
                   <i className={`bi ${modalType === 'crear' ? 'bi-save' : 'bi-check-lg'} me-2`}></i>
                   {modalType === 'crear' ? 'Crear Producto' : 'Guardar Cambios'}
                 </button>
