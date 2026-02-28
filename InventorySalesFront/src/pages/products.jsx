@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {productService} from '../services/productService';
-import {categoriaService} from '../services/categoriesService';
+import { productService } from '../services/productService';
+import { categoriaService } from '../services/categoriesService';
 import '../styles/products.css';
 
 const Products = () => {
@@ -39,109 +39,72 @@ const Products = () => {
     }
   }, [loadingCategorias, categorias]);
 
-
   const cargarProductos = async () => {
     try {
       setLoading(true);
-      console.log('🔵 Intentando cargar productos desde:', `${productService.API_URL}/Producto`);
-      
+      console.log('🔵 Intentando cargar productos...');
+
       const data = await productService.getAll();
       console.log('🟢 Respuesta de productos:', data);
-      console.log('📊 Tipo de data:', Array.isArray(data) ? 'array' : typeof data);
-      console.log('📊 Longitud:', data?.length);
-      
+
       if (data && Array.isArray(data)) {
-        if (data.length > 0) {
-          console.log('📦 Primer producto:', data[0]);
-          console.log('🔑 Keys de primer producto:', Object.keys(data[0]));
-          
-          // Enriquecer los productos con la información completa de categoría
-          const productosTransformados = data.map(producto => {
-            console.log('🔄 Transformando producto:', producto);
-            
-            // Buscar la categoría correspondiente
-            const categoriaEncontrada = categorias.find(c => c._id === producto.categoria?.toString());
-            console.log('🏷️ Categoría encontrada:', categoriaEncontrada);
-            
-            return {
-              _id: producto.id?.toString() || '',
-              nombre: producto.name || '',
-              precio: producto.price || 0,
-              stock: producto.stock || 0,
-              categoria: categoriaEncontrada || { 
-                _id: producto.categoria?.toString() || '0', 
-                nombre: obtenerNombreCategoria(producto.categoria?.toString()) 
-              }
-            };
-          });
-          
-          console.log('✅ Productos transformados:', productosTransformados);
-          setProductos(productosTransformados);
-        } else {
-          console.warn('⚠️ No hay productos en la base de datos');
-          setProductos([]);
-        }
-      } else {
-        console.error('❌ Error: data no es un array:', data);
-        setError('Error al cargar los productos');
+        // Transformar productos - AHORA _id es número
+        const productosTransformados = data.map(producto => {
+          // Buscar la categoría correspondiente (comparación de números)
+          const categoriaEncontrada = categorias.find(c => c._id === producto.categoria);
+
+          return {
+            _id: producto.id,  // Número directo
+            nombre: producto.name || '',
+            precio: producto.price || 0,
+            stock: producto.stock || 0,
+            categoria: categoriaEncontrada || {
+              _id: producto.categoria,  // Número
+              nombre: 'Sin categoría'
+            }
+          };
+        });
+
+        console.log('✅ Productos transformados:', productosTransformados);
+        setProductos(productosTransformados);
       }
     } catch (error) {
-      console.error('❌ Error en catch de cargarProductos:', error);
-      setError('Error al cargar los productos: ' + error.message);
+      console.error('❌ Error:', error);
+      setError('Error al cargar los productos');
     } finally {
       setLoading(false);
-      console.log('🏁 Carga de productos finalizada');
     }
   };
 
   const cargarCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('🔵 Intentando cargar categorías desde:', `${categoriaService.API_URL}/Categoria`);
-      
+      console.log('🔵 Intentando cargar categorías...');
+
       const data = await categoriaService.getAll();
       console.log('🟢 Respuesta de categorías:', data);
-      console.log('📊 Tipo de data:', Array.isArray(data) ? 'array' : typeof data);
-      console.log('📊 Longitud:', data?.length);
-      
+
       if (data && Array.isArray(data)) {
-        if (data.length > 0) {
-          console.log('📦 Primera categoría:', data[0]);
-          console.log('🔑 Keys de primera categoría:', Object.keys(data[0]));
-          
-          // Transformar al formato que usa el frontend
-          const categoriasTransformadas = data.map(cat => {
-            console.log('🔄 Transformando categoría:', cat);
-            return {
-              _id: cat.id?.toString() || '',
-              nombre: cat.nombre || ''
-            };
-          });
-          
-          console.log('✅ Categorías transformadas:', categoriasTransformadas);
-          setCategorias(categoriasTransformadas);
-        } else {
-          console.warn('⚠️ No hay categorías en la base de datos');
-          setCategorias([]);
-        }
-      } else {
-        console.error('❌ Error: data no es un array:', data);
-        setError('Error al cargar las categorías');
+        // Transformar categorías - AHORA _id es número
+        const categoriasTransformadas = data.map(cat => ({
+          _id: cat.id,  // Número directo
+          nombre: cat.nombre || ''
+        }));
+
+        console.log('✅ Categorías transformadas:', categoriasTransformadas);
+        setCategorias(categoriasTransformadas);
       }
     } catch (error) {
-      console.error('❌ Error en catch de cargarCategorias:', error);
-      setError('Error al cargar las categorías: ' + error.message);
+      console.error('❌ Error:', error);
+      setError('Error al cargar las categorías');
     } finally {
       setLoadingCategorias(false);
-      console.log('🏁 Carga de categorías finalizada');
     }
   };
 
-
-
   const obtenerNombreCategoria = (categoriaId) => {
     if (!categoriaId) return 'Sin categoría';
-    const categoria = categorias.find(c => c._id === categoriaId);
+    const categoria = categorias.find(c => c._id === Number(categoriaId));
     return categoria ? categoria.nombre : 'Sin categoría';
   };
 
@@ -162,7 +125,7 @@ const Products = () => {
         name: producto.nombre,
         price: producto.precio,
         stock: producto.stock,
-        categoria: producto.categoria._id
+        categoria: producto.categoria._id  // Número
       });
     } else if (type === 'stock' && producto) {
       setSelectedProducto(producto);
@@ -194,42 +157,43 @@ const Products = () => {
     try {
       if (modalType === 'crear') {
         const nuevoProducto = await productService.create(formData);
-        
-        // Buscar la categoría seleccionada
-        const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
-        
-        // Transformar respuesta
+        console.log('Producto creado:', nuevoProducto);
+
+        // Buscar categoría - comparación de números
+        const categoriaSeleccionada = categorias.find(c => c._id === Number(formData.categoria));
+
         const productoTransformado = {
-          _id: nuevoProducto.id.toString(),
+          _id: nuevoProducto.id,  // Número
           nombre: nuevoProducto.name,
           precio: nuevoProducto.price,
           stock: nuevoProducto.stock,
           categoria: categoriaSeleccionada || {
-            _id: formData.categoria,
+            _id: Number(formData.categoria),  // Número
             nombre: obtenerNombreCategoria(formData.categoria)
           }
         };
-        
+
         setProductos([...productos, productoTransformado]);
         setSuccess('Producto creado exitosamente');
+
       } else if (modalType === 'editar' && selectedProducto) {
         const productoActualizado = await productService.update(selectedProducto._id, formData);
-        
-        // Buscar la categoría seleccionada
-        const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
-        
-        // Transformar respuesta
+        console.log('Producto actualizado:', productoActualizado);
+
+        // Buscar categoría - comparación de números
+        const categoriaSeleccionada = categorias.find(c => c._id === Number(formData.categoria));
+
         const productoTransformado = {
-          _id: productoActualizado.id.toString(),
+          _id: productoActualizado.id,  // Número
           nombre: productoActualizado.name,
           precio: productoActualizado.price,
           stock: productoActualizado.stock,
           categoria: categoriaSeleccionada || {
-            _id: formData.categoria,
+            _id: Number(formData.categoria),  // Número
             nombre: obtenerNombreCategoria(formData.categoria)
           }
         };
-        
+
         setProductos(productos.map(p => p._id === selectedProducto._id ? productoTransformado : p));
         setSuccess('Producto actualizado exitosamente');
       }
@@ -237,6 +201,7 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error en submit:', error);
       setError(error.message || 'Error al guardar el producto');
     }
   };
@@ -253,14 +218,14 @@ const Products = () => {
         name: selectedProducto.nombre,
         price: selectedProducto.precio,
         stock: nuevoStock,
-        categoria: selectedProducto.categoria._id
+        categoria: selectedProducto.categoria._id  // Número
       });
 
-      // Buscar la categoría del producto
+      // Buscar categoría - comparación de números
       const categoriaProducto = categorias.find(c => c._id === selectedProducto.categoria._id);
 
       const productoTransformado = {
-        _id: productoActualizado.id.toString(),
+        _id: productoActualizado.id,  // Número
         nombre: productoActualizado.name,
         precio: productoActualizado.price,
         stock: productoActualizado.stock,
@@ -272,6 +237,7 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error en stock:', error);
       setError(error.message);
     }
   };
@@ -285,6 +251,7 @@ const Products = () => {
       setSuccess('Producto eliminado exitosamente');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error eliminando:', error);
       setError(error.message);
     }
   };
@@ -305,11 +272,21 @@ const Products = () => {
   const getProductIcon = (categoria) => {
     const iconos = {
       'Electrónica': 'bi-tv',
+      'Electronica': 'bi-tv',
       'Ropa': 'bi-hanger',
       'Hogar': 'bi-house-heart',
-      'Deportes': 'bi-trophy'
+      'Deportes': 'bi-trophy',
+      'Comida': 'bi-cup-straw',
+      'Mascota': 'bi-github'
     };
-    return iconos[categoria?.nombre] || 'bi-box';
+
+    const nombreCategoria = categoria?.nombre || '';
+    for (let key in iconos) {
+      if (nombreCategoria.toLowerCase().includes(key.toLowerCase())) {
+        return iconos[key];
+      }
+    }
+    return 'bi-box';
   };
 
   const totalProductos = productos.length;
@@ -437,8 +414,8 @@ const Products = () => {
                   <i className="bi bi-x-lg me-2"></i>
                   Cancelar
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={loadingCategorias || categorias.length === 0}
                 >
