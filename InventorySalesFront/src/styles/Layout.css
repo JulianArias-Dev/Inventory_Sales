@@ -1,0 +1,25 @@
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f5ff;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px; /* Mismo ancho que el navbar */
+  padding: 1.5rem;
+  min-height: 100vh;
+  background-color: #f0f5ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}

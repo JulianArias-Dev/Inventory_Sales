@@ -1,19 +1,14 @@
 import Navbar from "./Navbar"
+import '../../styles/Layout.css'; // Crearemos este archivo
 
 const Layout = ({ children }) => {
   return (
-    <>
+    <div className="layout-container">
       <Navbar />
-      <div
-        style={{
-          marginLeft: "250px",
-          padding: "1.5rem",
-          minHeight: "100vh"
-        }}
-      >
+      <main className="main-content">
         {children}
-      </div>
-    </>
+      </main>
+    </div>
   )
 }
 
