@@ -1,21 +1,14 @@
-const API_URL = 'http://localhost:5000/api'; // Ajusta el puerto según tu backend
+const API_URL = 'http://localhost:5000/api'; // Mismo puerto que categorías
 
-export const productoService = {
+export const productService = {
   // Obtener todos los productos
   async getAll() {
     try {
       const response = await fetch(`${API_URL}/Producto`);
       if (!response.ok) throw new Error('Error al cargar los productos');
-      const productos = await response.json();
-      
-      // Necesitamos obtener las categorías para tener los nombres completos
-      const categorias = await this.getCategorias();
-      
-      // Enriquecer los productos con la información completa de categoría
-      return productos.map(producto => ({
-        ...producto,
-        categoria: categorias.find(c => c.id === producto.categoria) || { id: producto.categoria, nombre: 'Sin categoría' }
-      }));
+      const data = await response.json();
+      console.log('Productos desde backend:', data); // Para depurar
+      return data;
     } catch (error) {
       console.error('Error en getAll:', error);
       throw error;
@@ -30,16 +23,7 @@ export const productoService = {
         if (response.status === 404) throw new Error('Producto no encontrado');
         throw new Error('Error al cargar el producto');
       }
-      const producto = await response.json();
-      
-      // Obtener la categoría para tener el nombre completo
-      const categorias = await this.getCategorias();
-      const categoriaCompleta = categorias.find(c => c.id === producto.categoria) || { id: producto.categoria, nombre: 'Sin categoría' };
-      
-      return {
-        ...producto,
-        categoria: categoriaCompleta
-      };
+      return await response.json();
     } catch (error) {
       console.error('Error en getById:', error);
       throw error;
@@ -55,10 +39,10 @@ export const productoService = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: productoData.nombre,
-          price: parseFloat(productoData.precio),
+          name: productoData.name,        // El backend espera 'name'
+          price: parseFloat(productoData.price),
           stock: parseInt(productoData.stock),
-          categoriaId: parseInt(productoData.categoriaId)
+          categoriaId: parseInt(productoData.categoria)  // El backend espera 'categoriaId'
         })
       });
 
@@ -75,15 +59,8 @@ export const productoService = {
       }
 
       const nuevoProducto = await response.json();
-      
-      // Obtener la categoría para tener el nombre completo
-      const categorias = await this.getCategorias();
-      const categoriaCompleta = categorias.find(c => c.id === nuevoProducto.categoria) || { id: nuevoProducto.categoria, nombre: 'Sin categoría' };
-      
-      return {
-        ...nuevoProducto,
-        categoria: categoriaCompleta
-      };
+      console.log('Producto creado:', nuevoProducto);
+      return nuevoProducto;
     } catch (error) {
       console.error('Error en create:', error);
       throw error;
@@ -99,10 +76,10 @@ export const productoService = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: productoData.nombre,
-          price: parseFloat(productoData.precio),
+          name: productoData.name,
+          price: parseFloat(productoData.price),
           stock: parseInt(productoData.stock),
-          categoriaId: parseInt(productoData.categoriaId)
+          categoriaId: parseInt(productoData.categoria)
         })
       });
 
@@ -116,69 +93,10 @@ export const productoService = {
       }
 
       const productoActualizado = await response.json();
-      
-      // Obtener la categoría para tener el nombre completo
-      const categorias = await this.getCategorias();
-      const categoriaCompleta = categorias.find(c => c.id === productoActualizado.categoria) || { id: productoActualizado.categoria, nombre: 'Sin categoría' };
-      
-      return {
-        ...productoActualizado,
-        categoria: categoriaCompleta
-      };
+      console.log('Producto actualizado:', productoActualizado);
+      return productoActualizado;
     } catch (error) {
       console.error('Error en update:', error);
-      throw error;
-    }
-  },
-
-  // Modificar stock (aumentar o disminuir)
-  async modificarStock(id, cantidad, operacion = 'aumentar') {
-    try {
-      // Primero obtenemos el producto actual
-      const producto = await this.getById(id);
-      
-      // Calculamos el nuevo stock
-      let nuevoStock;
-      if (operacion === 'aumentar') {
-        nuevoStock = producto.stock + cantidad;
-      } else {
-        if (producto.stock - cantidad < 0) {
-          throw new Error('Stock insuficiente');
-        }
-        nuevoStock = producto.stock - cantidad;
-      }
-
-      // Actualizamos el producto con el nuevo stock usando el endpoint PUT
-      const response = await fetch(`${API_URL}/Producto/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: producto.name,
-          price: producto.price,
-          stock: nuevoStock,
-          categoriaId: producto.categoria.id || producto.categoria
-        })
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) throw new Error('Producto no encontrado');
-        throw new Error('Error al modificar el stock');
-      }
-
-      const productoActualizado = await response.json();
-      
-      // Obtener la categoría para tener el nombre completo
-      const categorias = await this.getCategorias();
-      const categoriaCompleta = categorias.find(c => c.id === productoActualizado.categoria) || { id: productoActualizado.categoria, nombre: 'Sin categoría' };
-      
-      return {
-        ...productoActualizado,
-        categoria: categoriaCompleta
-      };
-    } catch (error) {
-      console.error('Error en modificarStock:', error);
       throw error;
     }
   },
@@ -193,8 +111,8 @@ export const productoService = {
       if (!response.ok) {
         if (response.status === 404) throw new Error('Producto no encontrado');
         if (response.status === 400) {
-          // El servicio tiene validación de ventas asociadas en HasRelation
-          throw new Error('No se puede eliminar el producto porque tiene ventas asociadas');
+          const error = await response.text();
+          throw new Error(error || 'No se puede eliminar el producto porque tiene ventas asociadas');
         }
         throw new Error('Error al eliminar el producto');
       }
@@ -203,19 +121,6 @@ export const productoService = {
     } catch (error) {
       console.error('Error en delete:', error);
       throw error;
-    }
-  },
-
-  // Obtener categorías para el selector
-  async getCategorias() {
-    try {
-      const response = await fetch(`${API_URL}/Categoria`);
-      if (!response.ok) throw new Error('Error al cargar las categorías');
-      return await response.json();
-    } catch (error) {
-      console.error('Error en getCategorias:', error);
-      // Retornar un array vacío en caso de error para no romper la UI
-      return [];
     }
   }
 };

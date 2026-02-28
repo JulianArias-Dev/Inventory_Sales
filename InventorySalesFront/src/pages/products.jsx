@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as productService from '../services/productService';
-import * as categoriaService from '../services/categoriesService';
+import  {categoriaService} from '../services/categoriesService';
 import '../styles/products.css';
 
 const Products = () => {
@@ -25,135 +25,127 @@ const Products = () => {
 
   // Cargar categorías desde el backend al inicio
   useEffect(() => {
-    console.log('Iniciando carga de categorías...');
     cargarCategorias();
   }, []);
 
   // Cargar productos después de tener las categorías
   useEffect(() => {
-    console.log('Estado de categorías actualizado:', { 
-      loadingCategorias, 
-      cantidadCategorias: categorias.length,
-      categorias: categorias 
-    });
-    
     if (!loadingCategorias) {
       if (categorias.length > 0) {
-        console.log('Categorías cargadas, procediendo a cargar productos...');
         cargarProductos();
       } else {
-        console.log('No hay categorías cargadas, mostrando lista vacía');
         setLoading(false);
       }
     }
   }, [loadingCategorias, categorias]);
 
-  const cargarCategorias = async () => {
-    try {
-      setLoadingCategorias(true);
-      console.log('1. Iniciando carga de categorías...');
-      
-      const data = await categoriaService.getAll();
-      console.log('2. Datos recibidos del backend:', data);
-      console.log('3. Tipo de datos:', Array.isArray(data) ? 'array' : typeof data);
-      console.log('4. Longitud:', data?.length);
-      
-      if (data && Array.isArray(data)) {
-        if (data.length > 0) {
-          console.log('5. Primer elemento:', data[0]);
-          console.log('6. Keys del primer elemento:', Object.keys(data[0]));
-          console.log('7. Valor de id:', data[0].id);
-          console.log('8. Valor de nombre:', data[0].nombre);
-          console.log('9. Tiene propiedad "id"?', 'id' in data[0]);
-          console.log('10. Tiene propiedad "Id"?', 'Id' in data[0]);
-          console.log('11. Tiene propiedad "_id"?', '_id' in data[0]);
-        }
-        
-        // Transformar al formato que usa el frontend
-        const categoriasTransformadas = data.map((cat, index) => {
-          // Intentar diferentes formas de obtener el ID
-          let idValue = null;
-          if (cat.id !== undefined) idValue = cat.id;
-          else if (cat.Id !== undefined) idValue = cat.Id;
-          else if (cat.ID !== undefined) idValue = cat.ID;
-          else if (cat._id !== undefined) idValue = cat._id;
-          
-          console.log(`Transformando categoría ${index}:`, {
-            original: cat,
-            idDetectado: idValue,
-            idTipo: typeof idValue,
-            nombreDetectado: cat.nombre || cat.Name || cat.Nombre
-          });
-          
-          return {
-            _id: idValue ? idValue.toString() : String(index + 1),
-            nombre: cat.nombre || cat.Name || cat.Nombre || 'Sin nombre'
-          };
-        });
-        
-        console.log('12. Categorías transformadas:', categoriasTransformadas);
-        setCategorias(categoriasTransformadas);
-      } else {
-        console.error('13. Error: data no es un array:', data);
-        setError('Error al cargar las categorías');
-      }
-    } catch (error) {
-      console.error('14. Error en catch:', error);
-      setError('Error al cargar las categorías: ' + error.message);
-    } finally {
-      setLoadingCategorias(false);
-      console.log('15. Carga de categorías finalizada');
-    }
-  };
 
   const cargarProductos = async () => {
     try {
       setLoading(true);
-      console.log('Cargando productos...');
+      console.log('🔵 Intentando cargar productos desde:', `${productService.API_URL}/Producto`);
+      
       const data = await productService.getAll();
-      console.log('Productos recibidos:', data);
+      console.log('🟢 Respuesta de productos:', data);
+      console.log('📊 Tipo de data:', Array.isArray(data) ? 'array' : typeof data);
+      console.log('📊 Longitud:', data?.length);
       
-      // Enriquecer los productos con la información completa de categoría
-      const productosTransformados = data.map(producto => {
-        console.log('Procesando producto:', producto);
-        const categoriaEncontrada = categorias.find(c => c._id === producto.categoria?.toString());
-        console.log('Categoría encontrada para producto:', categoriaEncontrada);
-        
-        return {
-          _id: producto.id,
-          nombre: producto.name,
-          precio: producto.price,
-          stock: producto.stock,
-          categoria: categoriaEncontrada || { 
-            _id: producto.categoria?.toString() || '0', 
-            nombre: obtenerNombreCategoria(producto.categoria?.toString()) 
-          }
-        };
-      });
-      
-      console.log('Productos transformados:', productosTransformados);
-      setProductos(productosTransformados);
+      if (data && Array.isArray(data)) {
+        if (data.length > 0) {
+          console.log('📦 Primer producto:', data[0]);
+          console.log('🔑 Keys de primer producto:', Object.keys(data[0]));
+          
+          // Enriquecer los productos con la información completa de categoría
+          const productosTransformados = data.map(producto => {
+            console.log('🔄 Transformando producto:', producto);
+            
+            // Buscar la categoría correspondiente
+            const categoriaEncontrada = categorias.find(c => c._id === producto.categoria?.toString());
+            console.log('🏷️ Categoría encontrada:', categoriaEncontrada);
+            
+            return {
+              _id: producto.id?.toString() || '',
+              nombre: producto.name || '',
+              precio: producto.price || 0,
+              stock: producto.stock || 0,
+              categoria: categoriaEncontrada || { 
+                _id: producto.categoria?.toString() || '0', 
+                nombre: obtenerNombreCategoria(producto.categoria?.toString()) 
+              }
+            };
+          });
+          
+          console.log('✅ Productos transformados:', productosTransformados);
+          setProductos(productosTransformados);
+        } else {
+          console.warn('⚠️ No hay productos en la base de datos');
+          setProductos([]);
+        }
+      } else {
+        console.error('❌ Error: data no es un array:', data);
+        setError('Error al cargar los productos');
+      }
     } catch (error) {
-      console.error('Error al cargar productos:', error);
+      console.error('❌ Error en catch de cargarProductos:', error);
       setError('Error al cargar los productos: ' + error.message);
     } finally {
       setLoading(false);
+      console.log('🏁 Carga de productos finalizada');
     }
   };
 
+  const cargarCategorias = async () => {
+    try {
+      setLoadingCategorias(true);
+      console.log('🔵 Intentando cargar categorías desde:', `${categoriaService.API_URL}/Categoria`);
+      
+      const data = await categoriaService.getAll();
+      console.log('🟢 Respuesta de categorías:', data);
+      console.log('📊 Tipo de data:', Array.isArray(data) ? 'array' : typeof data);
+      console.log('📊 Longitud:', data?.length);
+      
+      if (data && Array.isArray(data)) {
+        if (data.length > 0) {
+          console.log('📦 Primera categoría:', data[0]);
+          console.log('🔑 Keys de primera categoría:', Object.keys(data[0]));
+          
+          // Transformar al formato que usa el frontend
+          const categoriasTransformadas = data.map(cat => {
+            console.log('🔄 Transformando categoría:', cat);
+            return {
+              _id: cat.id?.toString() || '',
+              nombre: cat.nombre || ''
+            };
+          });
+          
+          console.log('✅ Categorías transformadas:', categoriasTransformadas);
+          setCategorias(categoriasTransformadas);
+        } else {
+          console.warn('⚠️ No hay categorías en la base de datos');
+          setCategorias([]);
+        }
+      } else {
+        console.error('❌ Error: data no es un array:', data);
+        setError('Error al cargar las categorías');
+      }
+    } catch (error) {
+      console.error('❌ Error en catch de cargarCategorias:', error);
+      setError('Error al cargar las categorías: ' + error.message);
+    } finally {
+      setLoadingCategorias(false);
+      console.log('🏁 Carga de categorías finalizada');
+    }
+  };
+
+
+
   const obtenerNombreCategoria = (categoriaId) => {
     if (!categoriaId) return 'Sin categoría';
-    const categoria = categorias.find(c => c._id === categoriaId.toString());
+    const categoria = categorias.find(c => c._id === categoriaId);
     return categoria ? categoria.nombre : 'Sin categoría';
   };
 
   const handleShowModal = (type, producto = null) => {
-    console.log('Abriendo modal. Estado actual de categorías:', {
-      categorias,
-      cantidad: categorias.length,
-      loadingCategorias
-    });
-    
     setModalType(type);
     setSelectedProducto(producto);
     setError('');
@@ -163,7 +155,7 @@ const Products = () => {
         name: '',
         price: '',
         stock: '',
-        categoria: ''  // Vacío para que muestre "Seleccione una categoría"
+        categoria: ''
       });
     } else if (type === 'editar' && producto) {
       setFormData({
@@ -201,17 +193,14 @@ const Products = () => {
 
     try {
       if (modalType === 'crear') {
-        console.log('Creando producto con datos:', formData);
         const nuevoProducto = await productService.create(formData);
-        console.log('Producto creado:', nuevoProducto);
         
         // Buscar la categoría seleccionada
         const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
-        console.log('Categoría seleccionada:', categoriaSeleccionada);
         
         // Transformar respuesta
         const productoTransformado = {
-          _id: nuevoProducto.id,
+          _id: nuevoProducto.id.toString(),
           nombre: nuevoProducto.name,
           precio: nuevoProducto.price,
           stock: nuevoProducto.stock,
@@ -224,16 +213,14 @@ const Products = () => {
         setProductos([...productos, productoTransformado]);
         setSuccess('Producto creado exitosamente');
       } else if (modalType === 'editar' && selectedProducto) {
-        console.log('Actualizando producto:', selectedProducto._id, formData);
         const productoActualizado = await productService.update(selectedProducto._id, formData);
-        console.log('Producto actualizado:', productoActualizado);
         
         // Buscar la categoría seleccionada
         const categoriaSeleccionada = categorias.find(c => c._id === formData.categoria);
         
         // Transformar respuesta
         const productoTransformado = {
-          _id: productoActualizado.id,
+          _id: productoActualizado.id.toString(),
           nombre: productoActualizado.name,
           precio: productoActualizado.price,
           stock: productoActualizado.stock,
@@ -250,7 +237,6 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      console.error('Error en submit:', error);
       setError(error.message || 'Error al guardar el producto');
     }
   };
@@ -263,8 +249,6 @@ const Products = () => {
         ? selectedProducto.stock + stockCantidad
         : Math.max(0, selectedProducto.stock - stockCantidad);
 
-      console.log('Modificando stock:', selectedProducto._id, 'nuevo stock:', nuevoStock);
-
       const productoActualizado = await productService.update(selectedProducto._id, {
         name: selectedProducto.nombre,
         price: selectedProducto.precio,
@@ -276,7 +260,7 @@ const Products = () => {
       const categoriaProducto = categorias.find(c => c._id === selectedProducto.categoria._id);
 
       const productoTransformado = {
-        _id: productoActualizado.id,
+        _id: productoActualizado.id.toString(),
         nombre: productoActualizado.name,
         precio: productoActualizado.price,
         stock: productoActualizado.stock,
@@ -288,7 +272,6 @@ const Products = () => {
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      console.error('Error modificando stock:', error);
       setError(error.message);
     }
   };
@@ -297,13 +280,11 @@ const Products = () => {
     if (!window.confirm('¿Está seguro de eliminar este producto?')) return;
 
     try {
-      console.log('Eliminando producto:', id);
       await productService.delete(id);
       setProductos(productos.filter(p => p._id !== id));
       setSuccess('Producto eliminado exitosamente');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      console.error('Error eliminando producto:', error);
       setError(error.message);
     }
   };
