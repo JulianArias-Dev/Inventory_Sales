@@ -6,9 +6,7 @@ const salesService = {
         try {
             const response = await fetch(`${API_URL}/Ventas`);
             if (!response.ok) throw new Error('Error al cargar las ventas');
-            const data = await response.json();
-            console.log('Ventas desde backend:', data);
-            return data;
+            return await response.json();
         } catch (error) {
             console.error('Error en getVentas:', error);
             throw error;
@@ -33,37 +31,41 @@ const salesService = {
     // Crear nueva venta
     createVenta: async (ventaData) => {
         try {
+            // IMPORTANTE: El DTO espera ProductoId con P mayúscula
+            const dataToSend = {
+                customerName: ventaData.customerName,
+                productos: ventaData.productos.map(p => ({
+                    ProductoId: Number(p.productoId), // Con P mayúscula!
+                    Cantidad: Number(p.cantidad) // Con C mayúscula!
+                }))
+            };
+
+            console.log('Enviando al backend:', JSON.stringify(dataToSend, null, 2));
+
             const response = await fetch(`${API_URL}/Ventas`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    // Mapear los campos según el DTO CreateVentaDto del backend
-                    clienteId: parseInt(ventaData.clienteId),
-                    productoId: parseInt(ventaData.productoId),
-                    cantidad: parseInt(ventaData.cantidad),
-                    precioUnitario: parseFloat(ventaData.precioUnitario),
-                    fecha: ventaData.fecha || new Date().toISOString(),
-                    // Agregar otros campos según el DTO
-                })
+                body: JSON.stringify(dataToSend)
             });
 
-            if (!response.ok) {
-                if (response.status === 400) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Error al crear la venta');
-                }
-                if (response.status === 409) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Conflicto al crear la venta');
-                }
-                throw new Error('Error al crear la venta');
+            const responseText = await response.text();
+            console.log('Respuesta del servidor:', responseText);
+
+            let responseData;
+            try {
+                responseData = JSON.parse(responseText);
+            } catch (e) {
+                responseData = { message: responseText };
             }
 
-            const nuevaVenta = await response.json();
-            console.log('Venta creada:', nuevaVenta);
-            return nuevaVenta;
+            if (!response.ok) {
+                console.error('Error del servidor:', response.status, responseData);
+                throw new Error(responseData.message || `Error ${response.status}: ${responseText}`);
+            }
+
+            return responseData;
         } catch (error) {
             console.error('Error en createVenta:', error);
             throw error;

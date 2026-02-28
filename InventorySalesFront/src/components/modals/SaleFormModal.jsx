@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import * as productService from '../../services/productService';
-import * as salesService from '../../services/salesService';
+import { productService } from '../../services/productService';
+import salesService from '../../services/salesService';
 import SaleConfirmModal from './SaleConfirmModal';
 import '../../styles/salesDetailsModal.css';
 
@@ -11,7 +11,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
-        cliente: '',
+        customerName: '',
         productos: []
     });
 
@@ -28,17 +28,25 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
     const cargarProductos = async () => {
         try {
+            setLoading(true);
             const data = await productService.getAll();
-            setProductos(data);
+
+            if (Array.isArray(data)) {
+                setProductos(data);
+            } else {
+                setError('Error al cargar los productos');
+            }
         } catch (error) {
             setError('Error al cargar los productos');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleClienteChange = (e) => {
         setFormData({
             ...formData,
-            cliente: e.target.value
+            customerName: e.target.value
         });
     };
 
@@ -82,6 +90,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
         }
 
         const productoExistente = formData.productos.find(p => p.productId === nuevoProducto.productId);
+
         if (productoExistente) {
             const nuevaCantidad = productoExistente.cantidad + nuevoProducto.cantidad;
             if (productoEnStock && productoEnStock.stock < nuevaCantidad) {
@@ -91,7 +100,6 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
             const productosActualizados = formData.productos.map(p => {
                 if (p.productId === nuevoProducto.productId) {
-                    const nuevaCantidad = p.cantidad + nuevoProducto.cantidad;
                     return {
                         ...p,
                         cantidad: nuevaCantidad,
@@ -143,7 +151,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.cliente.trim()) {
+        if (!formData.customerName.trim()) {
             setError('Ingrese el nombre del cliente');
             return;
         }
@@ -160,22 +168,40 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
     const handleConfirm = async () => {
         try {
             setLoading(true);
+            setError('');
 
+            if (!formData.customerName.trim()) {
+                throw new Error('El nombre del cliente es requerido');
+            }
+
+            if (formData.productos.length === 0) {
+                throw new Error('Debe agregar al menos un producto');
+            }
+
+            // Crear la estructura de datos
             const ventaData = {
-                cliente: formData.cliente,
+                customerName: formData.customerName.trim(),
                 productos: formData.productos.map(p => ({
-                    productId: p.productId,
-                    cantidad: p.cantidad
+                    productoId: p.productId, // Esto se mapeará en el servicio a ProductoId
+                    cantidad: p.cantidad // Esto se mapeará en el servicio a Cantidad
                 }))
             };
 
+            console.log('Datos preparados:', ventaData);
+
             await salesService.createVenta(ventaData);
 
+            setFormData({
+                customerName: '',
+                productos: []
+            });
             setStep('form');
-            onSuccess();
+
+            if (onSuccess) onSuccess();
             onClose();
         } catch (error) {
-            setError('Error al registrar la venta');
+            console.error('Error en handleConfirm:', error);
+            setError(error.message || 'Error al registrar la venta');
         } finally {
             setLoading(false);
         }
@@ -185,7 +211,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
         if (step === 'confirm') {
             setStep('form');
         } else {
-            if (formData.productos.length > 0 || formData.cliente) {
+            if (formData.productos.length > 0 || formData.customerName) {
                 if (window.confirm('¿Está seguro que desea cancelar? Los datos ingresados se perderán.')) {
                     onClose();
                 }
@@ -205,7 +231,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                 onConfirm={handleConfirm}
                 onEdit={() => setStep('form')}
                 data={{
-                    cliente: formData.cliente,
+                    cliente: formData.customerName,
                     productos: formData.productos,
                     total
                 }}
@@ -223,14 +249,19 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                         <i className="bi bi-cart-plus me-2"></i>
                         Nueva Venta
                     </h5>
-                    <button type="button" className="btn-close" onClick={handleCancel}></button>
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={handleCancel}
+                        disabled={loading}
+                    ></button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="modal-body">
                         {error && (
                             <div className="custom-alert custom-alert-danger">
-                                <i className="bi bi-exclamation-triangle-fill"></i>
+                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
                                 {error}
                             </div>
                         )}
@@ -245,9 +276,10 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    value={formData.cliente}
+                                    value={formData.customerName}
                                     onChange={handleClienteChange}
                                     placeholder="Ingrese el nombre del cliente"
+                                    disabled={loading}
                                     required
                                 />
                             </div>
@@ -265,11 +297,12 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                         className="form-select"
                                         value={nuevoProducto.productId}
                                         onChange={handleProductoSelect}
+                                        disabled={loading}
                                     >
                                         <option value="">Seleccione un producto</option>
                                         {productos.map(producto => (
                                             <option key={producto.id} value={producto.id}>
-                                                {producto.name} - ${producto.price} (Stock: {producto.stock})
+                                                {producto.name} - ${producto.price?.toFixed(2)} (Stock: {producto.stock})
                                             </option>
                                         ))}
                                     </select>
@@ -282,9 +315,11 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                                 type="number"
                                                 className="form-control"
                                                 min="1"
+                                                max={productos.find(p => p.id === nuevoProducto.productId)?.stock || 1}
                                                 value={nuevoProducto.cantidad}
                                                 onChange={handleCantidadChange}
                                                 placeholder="Cantidad"
+                                                disabled={loading}
                                             />
                                         </div>
                                         <div className="col-md-3">
@@ -292,6 +327,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                                 type="button"
                                                 className="btn btn-primary w-100"
                                                 onClick={agregarProducto}
+                                                disabled={loading}
                                             >
                                                 <i className="bi bi-plus me-2"></i>
                                                 Agregar
@@ -310,18 +346,19 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                                 <div className="product-details">
                                                     <span className="product-name">{producto.nombre}</span>
                                                     <span className="product-quantity">
-                                                        {producto.cantidad} x ${producto.precio.toFixed(2)}
+                                                        {producto.cantidad} x ${producto.precio?.toFixed(2)}
                                                     </span>
                                                 </div>
                                                 <div className="product-actions">
                                                     <span className="product-subtotal">
-                                                        ${producto.subtotal.toFixed(2)}
+                                                        ${producto.subtotal?.toFixed(2)}
                                                     </span>
                                                     <button
                                                         type="button"
                                                         className="btn-remove"
                                                         onClick={() => eliminarProducto(index)}
                                                         title="Eliminar producto"
+                                                        disabled={loading}
                                                     >
                                                         <i className="bi bi-trash"></i>
                                                     </button>
@@ -348,17 +385,31 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={handleCancel}
+                            disabled={loading}
+                        >
                             <i className="bi bi-x-lg me-2"></i>
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={formData.productos.length === 0}
+                            disabled={formData.productos.length === 0 || loading}
                         >
-                            <i className="bi bi-arrow-right me-2"></i>
-                            Continuar
+                            {loading ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    Procesando...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="bi bi-arrow-right me-2"></i>
+                                    Continuar
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
