@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { categoriaService } from '../services/categoriesService';
-import '../styles/categories.css'; // Importar el CSS
+import { productService } from '../services/productService';
+import '../styles/categories.css';
 
 const Categories = () => {
   const [categorias, setCategorias] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('crear');
@@ -20,13 +22,39 @@ const Categories = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const data = await categoriaService.getAll();
-      setCategorias(data);
-    } catch {
-      setError('Error al cargar las categorías');
+      
+      // Cargar categorías y productos en paralelo
+      const [categoriasData, productosData] = await Promise.all([
+        categoriaService.getAll(),
+        productService.getAll()
+      ]);
+      
+      console.log('Categorías recibidas:', categoriasData);
+      console.log('Productos recibidos:', productosData);
+      
+      // Transformar categorías
+      const categoriasTransformadas = categoriasData.map(cat => ({
+        _id: cat.id.toString(),
+        nombre: cat.nombre
+      }));
+      
+      setCategorias(categoriasTransformadas);
+      setProductos(productosData);
+      
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para verificar si una categoría tiene productos
+  const categoriaTieneProductos = (categoriaId) => {
+    return productos.some(producto => 
+      producto.categoria?.toString() === categoriaId || 
+      producto.categoriaId?.toString() === categoriaId
+    );
   };
 
   const handleShowModal = (type, categoria = null) => {
@@ -54,22 +82,45 @@ const Categories = () => {
     try {
       if (modalType === 'crear') {
         const nuevaCategoria = await categoriaService.create(formData);
-        setCategorias([...categorias, nuevaCategoria]);
+        console.log('Categoría creada:', nuevaCategoria);
+        
+        // Transformar la respuesta
+        const categoriaTransformada = {
+          _id: nuevaCategoria.id.toString(),
+          nombre: nuevaCategoria.nombre
+        };
+        
+        setCategorias([...categorias, categoriaTransformada]);
         setSuccess('Categoría creada exitosamente');
       } else if (modalType === 'editar' && selectedCategoria) {
         const categoriaActualizada = await categoriaService.update(selectedCategoria._id, formData);
-        setCategorias(categorias.map(c => c._id === selectedCategoria._id ? categoriaActualizada : c));
+        console.log('Categoría actualizada:', categoriaActualizada);
+        
+        // Transformar la respuesta
+        const categoriaTransformada = {
+          _id: categoriaActualizada.id.toString(),
+          nombre: categoriaActualizada.nombre
+        };
+        
+        setCategorias(categorias.map(c => c._id === selectedCategoria._id ? categoriaTransformada : c));
         setSuccess('Categoría actualizada exitosamente');
       }
       
       handleCloseModal();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error en submit:', error);
       setError(error.message);
     }
   };
 
   const handleEliminar = async (id, nombre) => {
+    // Verificar si tiene productos antes de eliminar
+    if (categoriaTieneProductos(id)) {
+      setError(`No se puede eliminar la categoría "${nombre}" porque tiene productos asociados`);
+      return;
+    }
+    
     if (!window.confirm(`¿Está seguro de eliminar la categoría "${nombre}"?`)) return;
     
     try {
@@ -78,6 +129,7 @@ const Categories = () => {
       setSuccess('Categoría eliminada exitosamente');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
+      console.error('Error eliminando:', error);
       setError(error.message);
     }
   };
@@ -88,11 +140,12 @@ const Categories = () => {
     );
   };
 
+  // Calcular estadísticas
   const totalCategorias = categorias.length;
   const categoriasConProductos = categorias.filter(c => 
-    // Esto debería venir del servicio, pero por ahora lo simulamos
-    ['1', '2'].includes(c._id)
+    categoriaTieneProductos(c._id)
   ).length;
+  const categoriasSinProductos = totalCategorias - categoriasConProductos;
 
   const categoriasFiltradas = filtrarCategorias();
 
@@ -152,7 +205,7 @@ const Categories = () => {
                 <i className="bi bi-folder"></i>
               </div>
               <div className="stat-info">
-                <h3>{totalCategorias - categoriasConProductos}</h3>
+                <h3>{categoriasSinProductos}</h3>
                 <p>Sin Productos</p>
               </div>
             </div>
@@ -198,43 +251,62 @@ const Categories = () => {
         ) : (
           <div className="categories-grid">
             {categoriasFiltradas.length > 0 ? (
-              categoriasFiltradas.map((categoria) => (
-                <div key={categoria._id} className="category-card">
-                  <div className="card-body">
-                    <div className="category-header">
-                      <div className="category-icon">
-                        <i className={getCategoryIcon(categoria.nombre)}></i>
+              categoriasFiltradas.map((categoria) => {
+                const tieneProductos = categoriaTieneProductos(categoria._id);
+                
+                return (
+                  <div key={categoria._id} className={`category-card ${tieneProductos ? 'has-products' : ''}`}>
+                    <div className="card-body">
+                      <div className="category-header">
+                        <div className="category-icon">
+                          <i className={getCategoryIcon(categoria.nombre)}></i>
+                        </div>
+                        {tieneProductos && (
+                          <span className="badge bg-info" title="Tiene productos asociados">
+                            <i className="bi bi-box me-1"></i>
+                            {productos.filter(p => p.categoria?.toString() === categoria._id).length}
+                          </span>
+                        )}
                       </div>
-                    </div>
-                    
-                    <h5 className="category-title">
-                      {categoria.nombre}
-                    </h5>
-                    
-                    <div className="category-id">
-                      <i className="bi bi-hash"></i>
-                      ID: {categoria._id}
-                    </div>
+                      
+                      <h5 className="category-title">
+                        {categoria.nombre}
+                      </h5>
+                      
+                      <div className="category-id">
+                        <i className="bi bi-hash"></i>
+                        ID: {categoria._id}
+                      </div>
 
-                    <div className="category-actions">
-                      <button
-                        className="btn-category btn-category-edit"
-                        onClick={() => handleShowModal('editar', categoria)}
-                      >
-                        <i className="bi bi-pencil"></i>
-                        Editar
-                      </button>
-                      <button
-                        className="btn-category btn-category-delete"
-                        onClick={() => handleEliminar(categoria._id, categoria.nombre)}
-                      >
-                        <i className="bi bi-trash"></i>
-                        Eliminar
-                      </button>
+                      <div className="category-actions">
+                        <button
+                          className="btn-category btn-category-edit"
+                          onClick={() => handleShowModal('editar', categoria)}
+                        >
+                          <i className="bi bi-pencil"></i>
+                          Editar
+                        </button>
+                        <button
+                          className="btn-category btn-category-delete"
+                          onClick={() => handleEliminar(categoria._id, categoria.nombre)}
+                          disabled={tieneProductos}
+                          title={tieneProductos ? "No se puede eliminar porque tiene productos asociados" : "Eliminar categoría"}
+                        >
+                          <i className="bi bi-trash"></i>
+                          Eliminar
+                        </button>
+                      </div>
+                      
+                      {tieneProductos && (
+                        <div className="mt-2 text-muted small">
+                          <i className="bi bi-info-circle me-1"></i>
+                          {productos.filter(p => p.categoria?.toString() === categoria._id).length} producto(s) asociado(s)
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="empty-state">
                 <i className="bi bi-folder"></i>
