@@ -132,16 +132,16 @@ Write-Host "   Insertando categorías..." -ForegroundColor Gray
 docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Unicesar+2026" -C -d InventorySales -Q @"
 SET IDENTITY_INSERT Categorias ON;
 INSERT INTO Categorias (Id, Name) VALUES
-(1, 'Electrónica'),
+(1, 'Electronica'),
 (2, 'Ropa y Accesorios'),
 (3, 'Hogar y Muebles'),
 (4, 'Deportes y Fitness'),
 (5, 'Juguetes y Juegos'),
-(6, 'Libros y Papelería'),
+(6, 'Libros y Papeleria'),
 (7, 'Belleza y Cuidado Personal'),
 (8, 'Alimentos y Bebidas'),
 (9, 'Mascotas'),
-(10, 'Herramientas y Ferretería');
+(10, 'Herramientas y Ferreteria');
 SET IDENTITY_INSERT Categorias OFF;
 "@
 if ($LASTEXITCODE -eq 0) { Write-Host "   ✅ Categorías insertadas (IDs 1-10)" -ForegroundColor Green }
@@ -153,14 +153,14 @@ SET IDENTITY_INSERT Productos ON;
 INSERT INTO Productos (Id, Name, Price, Stock, CategoriaId) VALUES
 (1, 'Smartphone Samsung Galaxy S23', 899.99, 15, 1),
 (2, 'Camiseta Deportiva Nike', 29.99, 50, 2),
-(3, 'Sofá de 3 plazas', 499.99, 5, 3),
-(4, 'Bicicleta de Montaña', 349.99, 8, 4),
+(3, 'Sofa de 3 plazas', 499.99, 5, 3),
+(4, 'Bicicleta de Montana', 349.99, 8, 4),
 (5, 'LEGO Technic Porsche 911', 149.99, 12, 5),
-(6, 'El Principito (Libro)', 12.99, 30, 6),
-(7, 'Perfume Chanel N°5', 89.99, 10, 7),
-(8, 'Café Colombiano 500g', 8.99, 100, 8),
+(6, 'El Principito Libro', 12.99, 30, 6),
+(7, 'Perfume Chanel No 5', 89.99, 10, 7),
+(8, 'Cafe Colombiano 500g', 8.99, 100, 8),
 (9, 'Alimento para Perros 15kg', 45.99, 20, 9),
-(10, 'Taladro Eléctrico', 79.99, 7, 10);
+(10, 'Taladro Electrico', 79.99, 7, 10);
 SET IDENTITY_INSERT Productos OFF;
 "@
 if ($LASTEXITCODE -eq 0) { Write-Host "   ✅ Productos insertados (IDs 1-10)" -ForegroundColor Green }
@@ -170,15 +170,15 @@ Write-Host "   Insertando ventas..." -ForegroundColor Gray
 docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Unicesar+2026" -C -d InventorySales -Q @"
 SET IDENTITY_INSERT Ventas ON;
 INSERT INTO Ventas (Id, Date, CustomerName, TotalAmount) VALUES
-(1, GETDATE(), 'Carlos Rodríguez', 929.98),
-(2, GETDATE(), 'Ana Martínez', 149.99),
-(3, DATEADD(day, -1, GETDATE()), 'Luis González', 508.97),
-(4, DATEADD(day, -1, GETDATE()), 'Laura Sánchez', 89.99),
-(5, DATEADD(day, -2, GETDATE()), 'Pedro Gómez', 429.98),
-(6, DATEADD(day, -2, GETDATE()), 'Sofía López', 71.96),
+(1, GETDATE(), 'Carlos Rodriguez', 929.98),
+(2, GETDATE(), 'Ana Martinez', 149.99),
+(3, DATEADD(day, -1, GETDATE()), 'Luis Gonzalez', 508.97),
+(4, DATEADD(day, -1, GETDATE()), 'Laura Sanchez', 89.99),
+(5, DATEADD(day, -2, GETDATE()), 'Pedro Gomez', 429.98),
+(6, DATEADD(day, -2, GETDATE()), 'Sofia Lopez', 71.96),
 (7, DATEADD(day, -3, GETDATE()), 'Diego Torres', 899.99),
-(8, DATEADD(day, -3, GETDATE()), 'Valentina Díaz', 59.98),
-(9, DATEADD(day, -4, GETDATE()), 'Andrés Castro', 349.99),
+(8, DATEADD(day, -3, GETDATE()), 'Valentina Diaz', 59.98),
+(9, DATEADD(day, -4, GETDATE()), 'Andres Castro', 349.99),
 (10, DATEADD(day, -4, GETDATE()), 'Camila Rojas', 30.97);
 SET IDENTITY_INSERT Ventas OFF;
 "@
