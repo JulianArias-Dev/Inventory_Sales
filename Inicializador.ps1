@@ -38,7 +38,8 @@ while ($attempt -lt $maxAttempts -and -not $sqlReady) {
     if ($LASTEXITCODE -eq 0) {
         $sqlReady = $true
         Write-Host " ✅" -ForegroundColor Green
-    } else {
+    }
+    else {
         $attempt++
         Write-Host "." -NoNewline
         Start-Sleep -Seconds 3
@@ -66,7 +67,8 @@ while ($attempt -lt $maxAttempts -and -not $apiReady) {
             $apiReady = $true
             Write-Host " ✅" -ForegroundColor Green
         }
-    } catch {
+    }
+    catch {
         $attempt++
         Write-Host "." -NoNewline
         Start-Sleep -Seconds 2
@@ -90,7 +92,8 @@ while ($attempt -lt $maxAttempts -and -not $tablesReady) {
     if ($tableCheck -eq "4") {
         $tablesReady = $true
         Write-Host " ✅" -ForegroundColor Green
-    } else {
+    }
+    else {
         $attempt++
         Write-Host "." -NoNewline
         Start-Sleep -Seconds 3
@@ -170,16 +173,31 @@ Write-Host "   Insertando ventas..." -ForegroundColor Gray
 docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Unicesar+2026" -C -d InventorySales -Q @"
 SET IDENTITY_INSERT Ventas ON;
 INSERT INTO Ventas (Id, Date, CustomerName, TotalAmount) VALUES
+-- HOY (5 ventas)
 (1, GETDATE(), 'Carlos Rodriguez', 929.98),
 (2, GETDATE(), 'Ana Martinez', 149.99),
-(3, DATEADD(day, -1, GETDATE()), 'Luis Gonzalez', 508.97),
-(4, DATEADD(day, -1, GETDATE()), 'Laura Sanchez', 89.99),
-(5, DATEADD(day, -2, GETDATE()), 'Pedro Gomez', 429.98),
-(6, DATEADD(day, -2, GETDATE()), 'Sofia Lopez', 71.96),
-(7, DATEADD(day, -3, GETDATE()), 'Diego Torres', 899.99),
-(8, DATEADD(day, -3, GETDATE()), 'Valentina Diaz', 59.98),
-(9, DATEADD(day, -4, GETDATE()), 'Andres Castro', 349.99),
-(10, DATEADD(day, -4, GETDATE()), 'Camila Rojas', 30.97);
+(3, GETDATE(), 'Luis Gonzalez', 508.97),
+(4, GETDATE(), 'Laura Sanchez', 89.99),
+(5, GETDATE(), 'Pedro Gomez', 429.98),
+
+-- AYER (3 ventas)
+(6, DATEADD(day, -1, GETDATE()), 'Sofia Lopez', 71.96),
+(7, DATEADD(day, -1, GETDATE()), 'Diego Torres', 899.99),
+(8, DATEADD(day, -1, GETDATE()), 'Valentina Diaz', 59.98),
+
+-- HACE 2 DÍAS (4 ventas)
+(9, DATEADD(day, -2, GETDATE()), 'Andres Castro', 349.99),
+(10, DATEADD(day, -2, GETDATE()), 'Camila Rojas', 30.97),
+(11, DATEADD(day, -2, GETDATE()), 'Miguel Herrera', 149.99),
+(12, DATEADD(day, -2, GETDATE()), 'Paula Medina', 89.99),
+
+-- HACE 3 DÍAS (2 ventas)
+(13, DATEADD(day, -3, GETDATE()), 'Juan Perez', 899.99),
+(14, DATEADD(day, -3, GETDATE()), 'Daniela Ruiz', 59.98),
+
+-- HACE 4 DÍAS (1 venta)
+(15, DATEADD(day, -4, GETDATE()), 'Ricardo Mora', 349.99);
+
 SET IDENTITY_INSERT Ventas OFF;
 "@
 if ($LASTEXITCODE -eq 0) { Write-Host "   ✅ Ventas insertadas (IDs 1-10)" -ForegroundColor Green }
