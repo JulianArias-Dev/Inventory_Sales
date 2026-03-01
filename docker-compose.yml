@@ -21,7 +21,7 @@ services:
       - app-network
 
   api:
-    build: ./InventorySalesAPI
+    image: andresg0c/inventory_sales_api:latest
     container_name: dotnet_api
     ports:
       - "5000:8080"
@@ -34,7 +34,7 @@ services:
       - app-network
 
   frontend:
-    build: ./InventorySalesFront
+    image: andresg0c/inventory_sales:latest
     container_name: InventorySalesfrontend
     ports:
       - "5173:5173"
