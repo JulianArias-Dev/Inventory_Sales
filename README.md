@@ -36,7 +36,7 @@ Esto hará lo siguiente:
 docker compose up
 ```
 
-🧪 Para probar la aplicación
+## Probar la aplicación
 ### Backend
 ```bash
 # En swagger se encontrará la documentación del backend
