@@ -20,11 +20,7 @@ git clone <url-del-proyecto>
 ```bash
 cd Inventory_Sales
 ```
-3️⃣ Levantar los contenedores
-```bash
-docker compose up --build
-```
-🧪 Para cargar los datos de prueba 
+3️⃣ Construir, levantar los contenedores y cargar los datos de prueba
 ```bash
 .\Inicializador.ps1
 ```
@@ -32,4 +28,9 @@ Esto creará:
 * Categorías
 * Productos
 * Ventas de ejemplo
+
+🧪 Para levantar los contenedores
+```bash
+docker compose up
+```
 
