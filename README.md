@@ -25,9 +25,11 @@ cd Inventory_Sales
 .\Inicializador.ps1
 ```
 Esto creará:
-* Categorías
-* Productos
-* Ventas de ejemplo
+* Descargará las imagenes docker
+* Creará Contenedores (sqlServer, dotnet_api, InventorySalesfrontend)
+* Datos de ejemplo para Categorías
+* Datos de ejemplo para Productos
+* Datos de ejemplo para Ventas
 
 🧪 Para levantar los contenedores
 ```bash
