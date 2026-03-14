@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      - ConnectionStrings__DefaultConnection=Server=db;Database=InventorySales;User=sa;Password=Unicesar+2026;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=my-sqlserver-db.cukewxhandeh.us-east-1.rds.amazonaws.com,1433;Database=my-sqlserver-db;User=admin;Password=actividad1-bd;TrustServerCertificate=True;
     networks:
       - app-network
 
