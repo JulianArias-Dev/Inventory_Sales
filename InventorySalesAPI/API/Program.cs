@@ -6,8 +6,15 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(
-	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+//builder.Services.AddDbContext<AppDbContext>(
+//	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+//);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var serverVersion = new MySqlServerVersion(new Version(8, 4, 7));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+	options.UseMySql(connectionString, serverVersion)
 );
 
 builder.Services.AddProblemDetails();
