@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api'; // Mismo puerto que categorías
+const API_URL = '/api'; // Mismo puerto que categorías
 
 export const productService = {
   // Obtener todos los productos
