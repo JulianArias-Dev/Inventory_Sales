@@ -5,10 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-//builder.Services.AddDbContext<AppDbContext>(
-//	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-//);
+builder.Configuration.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddEnvironmentVariables();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var serverVersion = new MySqlServerVersion(new Version(8, 4, 7));
@@ -45,7 +42,8 @@ app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
+
 //app.UseExceptionHandler("/error");
 
 //app.Map("/error", (HttpContext context) =>
@@ -60,10 +58,38 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapGet("/", () => Results.Ok("API running"));
+app.MapGet("/health", () => Results.Ok("OK"));
+
 using (var scope = app.Services.CreateScope())
 {
-	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	db.Database.Migrate();
+	try
+	{
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+		// Intentar con retries
+		var maxRetries = 5;
+		for (int i = 0; i < maxRetries; i++)
+		{
+			try
+			{
+				db.Database.Migrate();
+				logger.LogInformation("Migraciones aplicadas exitosamente");
+				break;
+			}
+			catch (Exception ex) when (i < maxRetries - 1)
+			{
+				logger.LogWarning(ex, $"Error migrando (intento {i + 1}/{maxRetries}), reintentando en 5 segundos...");
+				await Task.Delay(5000);
+			}
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine("Error migrando la BD: " + ex.Message);
+		// No lances la excepción, la app puede seguir intentando después
+	}
 }
 
 app.Run();
