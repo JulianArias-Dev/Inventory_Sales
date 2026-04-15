@@ -6,6 +6,7 @@
 		public DateTime Date { get; set; }
 		public decimal TotalAmount { get; set; }
 		public required string CustomerName { get; set; }
+		public string? CustomerEmail { get; set; }
 
 		public ICollection<VentaProducto> VentaProductos { get; set; } = new List<VentaProducto>();
 	}

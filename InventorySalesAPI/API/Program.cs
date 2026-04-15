@@ -2,6 +2,7 @@ using API.Data;
 using API.Repository;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
+using Amazon.SQS;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddProblemDetails();
+
+// 1. Obtener las opciones de AWS desde appsettings
+var awsOptions = builder.Configuration.GetAWSOptions();
+
+// 2. Registrar el cliente de SQS
+builder.Services.AddDefaultAWSOptions(awsOptions);
+builder.Services.AddAWSService<IAmazonSQS>();
 
 // Build Own Services
 builder.Services.AddScoped<CategoryRep>();

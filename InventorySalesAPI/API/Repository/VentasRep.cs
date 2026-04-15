@@ -29,7 +29,7 @@ namespace API.Repository
 		{
 			await _context.Ventas.AddAsync(venta);
 			await _context.SaveChangesAsync();
-
+			
 			return venta; 
 		}
 

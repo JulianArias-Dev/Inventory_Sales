@@ -46,6 +46,7 @@ const salesService = {
         try {
             const dataToSend = {
                 customerName: ventaData.customerName,
+                customerEmail: ventaData.customerEmail,
                 productos: ventaData.productos.map(p => ({
                     ProductoId: Number(p.productoId),
                     Cantidad: Number(p.cantidad)

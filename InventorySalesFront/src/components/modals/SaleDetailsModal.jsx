@@ -147,6 +147,12 @@ const SalesDetailsModal = ({ ventaId, onClose }) => {
                         </div>
                         <div className="customer-details-large">
                             <h4>{venta.customerName}</h4>
+                            {venta.customerEmail && (
+                                <p>
+                                    <i className="bi bi-envelope"></i>
+                                    {venta.customerEmail}
+                                </p>
+                            )}
                             <p>
                                 <i className="bi bi-person-badge"></i>
                                 Cliente

@@ -12,7 +12,7 @@ const SaleConfirmModal = ({
 }) => {
     if (!show) return null;
 
-    const { cliente, productos, total } = data;
+    const { cliente, email, productos, total } = data;
 
     const handleCancel = () => {
         // Llamar a onClose que viene del SaleFormModal y cerrará todo
@@ -51,6 +51,7 @@ const SaleConfirmModal = ({
                         <div className="summary-section">
                             <h6><i className="bi bi-person me-2"></i>Cliente</h6>
                             <p className="summary-value">{cliente}</p>
+                            <p className="summary-value">{email}</p>
                         </div>
 
                         <div className="summary-section">

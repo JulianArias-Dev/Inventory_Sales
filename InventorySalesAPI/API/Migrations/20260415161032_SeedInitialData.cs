@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMySql : Migration
+    public partial class SeedInitialData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,7 +40,9 @@ namespace API.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(65,30)", nullable: false),
-                    CustomerName = table.Column<string>(type: "longtext", nullable: false)
+                    CustomerName = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CustomerEmail = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -72,7 +76,7 @@ namespace API.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "VentaProducto",
+                name: "VentaProductos",
                 columns: table => new
                 {
                     VentaId = table.Column<int>(type: "int", nullable: false),
@@ -82,21 +86,41 @@ namespace API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VentaProducto", x => new { x.VentaId, x.ProductoId });
+                    table.PrimaryKey("PK_VentaProductos", x => new { x.VentaId, x.ProductoId });
                     table.ForeignKey(
-                        name: "FK_VentaProducto_Productos_ProductoId",
+                        name: "FK_VentaProductos_Productos_ProductoId",
                         column: x => x.ProductoId,
                         principalTable: "Productos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_VentaProducto_Ventas_VentaId",
+                        name: "FK_VentaProductos_Ventas_VentaId",
                         column: x => x.VentaId,
                         principalTable: "Ventas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.InsertData(
+                table: "Categorias",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Jeans" },
+                    { 2, "Zapatos" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Productos",
+                columns: new[] { "Id", "CategoriaId", "Name", "Price", "Stock" },
+                values: new object[,]
+                {
+                    { 1, 1, "Jeans Azules", 125000m, 50 },
+                    { 2, 1, "Jeans Claros", 118000m, 50 },
+                    { 3, 2, "Tennis Nike", 220000m, 50 },
+                    { 4, 2, "Tennis Adidas", 225000m, 50 }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categorias_Name",
@@ -116,8 +140,8 @@ namespace API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_VentaProducto_ProductoId",
-                table: "VentaProducto",
+                name: "IX_VentaProductos_ProductoId",
+                table: "VentaProductos",
                 column: "ProductoId");
         }
 
@@ -125,7 +149,7 @@ namespace API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "VentaProducto");
+                name: "VentaProductos");
 
             migrationBuilder.DropTable(
                 name: "Productos");

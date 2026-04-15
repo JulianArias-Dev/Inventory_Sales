@@ -12,6 +12,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
     const [formData, setFormData] = useState({
         customerName: '',
+        customerEmail: '',
         productos: []
     });
 
@@ -46,6 +47,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
     const resetForm = () => {
         setFormData({
             customerName: '',
+            customerEmail: '',
             productos: []
         });
         setNuevoProducto({
@@ -62,6 +64,13 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
         setFormData({
             ...formData,
             customerName: e.target.value
+        });
+    };
+
+    const handleEmailChange = (e) => {
+        setFormData({
+            ...formData,
+            customerEmail: e.target.value
         });
     };
 
@@ -171,6 +180,18 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             return;
         }
 
+        if (!formData.customerEmail.trim()) {
+            setError('Ingrese el email del cliente');
+            return;
+        }
+
+        // Validar formato de email básico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.customerEmail.trim())) {
+            setError('Ingrese un email válido');
+            return;
+        }
+
         if (formData.productos.length === 0) {
             setError('Agregue al menos un producto');
             return;
@@ -187,6 +208,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
             const ventaData = {
                 customerName: formData.customerName.trim(),
+                customerEmail: formData.customerEmail.trim(),
                 productos: formData.productos.map(p => ({
                     productoId: p.productId,
                     cantidad: p.cantidad
@@ -239,6 +261,7 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                 onEdit={() => setStep('form')}
                 data={{
                     cliente: formData.customerName,
+                    email: formData.customerEmail,
                     productos: formData.productos,
                     total
                 }}
@@ -286,6 +309,18 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
                                     value={formData.customerName}
                                     onChange={handleClienteChange}
                                     placeholder="Ingrese el nombre del cliente"
+                                    disabled={loading}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Email del Cliente</label>
+                                <input
+                                    type="email"
+                                    className="form-control"
+                                    value={formData.customerEmail}
+                                    onChange={handleEmailChange}
+                                    placeholder="Ingrese el email del cliente"
                                     disabled={loading}
                                     required
                                 />

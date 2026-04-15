@@ -22,6 +22,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Normalizar line endings para evitar errores en Alpine
+RUN apk add --no-cache gettext curl dos2unix && dos2unix /entrypoint.sh
+
 # Healthcheck para ECS
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost/health || exit 1

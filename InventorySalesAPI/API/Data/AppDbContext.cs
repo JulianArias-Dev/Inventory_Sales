@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using API.Models;
+﻿using API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Data
 {
@@ -63,25 +63,50 @@ namespace API.Data
 				entity.ToTable("Ventas");
 
 				entity.HasKey(e => e.Id);
-				entity.Property(e => e.Date).IsRequired();
+				entity.Property(e => e.CustomerName)
+					  .IsRequired()
+					  .HasMaxLength(100);
+
+				entity.Property(e => e.CustomerEmail)
+					  .HasMaxLength(100);
+
+				entity.HasMany(v => v.VentaProductos)
+					  .WithOne(vp => vp.Venta)
+					  .HasForeignKey(vp => vp.VentaId)
+					  .OnDelete(DeleteBehavior.Cascade);
 			});
 
-			// VentaProducto (Many to Many con entidad intermedia)
+			// VentaProducto
 			modelBuilder.Entity<VentaProducto>(entity =>
 			{
-				entity.ToTable("VentaProducto");
-
-				entity.HasKey(vp => new { vp.VentaId, vp.ProductoId });
+				entity.ToTable("VentaProductos");
+				
+				// Clave primaria compuesta
+				entity.HasKey(e => new { e.VentaId, e.ProductoId });
 
 				entity.HasOne(vp => vp.Venta)
 					  .WithMany(v => v.VentaProductos)
-					  .HasForeignKey(vp => vp.VentaId);
+					  .HasForeignKey(vp => vp.VentaId)
+					  .OnDelete(DeleteBehavior.Cascade);
 
 				entity.HasOne(vp => vp.Producto)
 					  .WithMany(p => p.VentaProductos)
-					  .HasForeignKey(vp => vp.ProductoId);
+					  .HasForeignKey(vp => vp.ProductoId)
+					  .OnDelete(DeleteBehavior.Cascade);
 			});
-		}
 
+			// Seeding de datos iniciales
+			var categoriaJeans = new Categoria { Id = 1, Name = "Jeans" };
+			var categoriaZapatos = new Categoria { Id = 2, Name = "Zapatos" };
+
+			modelBuilder.Entity<Categoria>().HasData(categoriaJeans, categoriaZapatos);
+
+			modelBuilder.Entity<Producto>().HasData(
+				new Producto { Id = 1, Name = "Jeans Azules", Price = 125000, Stock = 50, CategoriaId = 1 },
+				new Producto { Id = 2, Name = "Jeans Claros", Price = 118000, Stock = 50, CategoriaId = 1 },
+				new Producto { Id = 3, Name = "Tennis Nike", Price = 220000, Stock = 50, CategoriaId = 2 },
+				new Producto { Id = 4, Name = "Tennis Adidas", Price = 225000, Stock = 50, CategoriaId = 2 }
+			);
+		}
 	}
 }

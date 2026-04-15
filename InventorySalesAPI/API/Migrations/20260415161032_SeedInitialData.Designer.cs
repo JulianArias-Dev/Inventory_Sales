@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260316174015_InitialMySql")]
-    partial class InitialMySql
+    [Migration("20260415161032_SeedInitialData")]
+    partial class SeedInitialData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,18 @@ namespace API.Migrations
                         .IsUnique();
 
                     b.ToTable("Categorias", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Jeans"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Zapatos"
+                        });
                 });
 
             modelBuilder.Entity("API.Models.Producto", b =>
@@ -76,6 +88,40 @@ namespace API.Migrations
                         .IsUnique();
 
                     b.ToTable("Productos", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoriaId = 1,
+                            Name = "Jeans Azules",
+                            Price = 125000m,
+                            Stock = 50
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoriaId = 1,
+                            Name = "Jeans Claros",
+                            Price = 118000m,
+                            Stock = 50
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoriaId = 2,
+                            Name = "Tennis Nike",
+                            Price = 220000m,
+                            Stock = 50
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoriaId = 2,
+                            Name = "Tennis Adidas",
+                            Price = 225000m,
+                            Stock = 50
+                        });
                 });
 
             modelBuilder.Entity("API.Models.Venta", b =>
@@ -86,9 +132,14 @@ namespace API.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CustomerEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("CustomerName")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
@@ -119,7 +170,7 @@ namespace API.Migrations
 
                     b.HasIndex("ProductoId");
 
-                    b.ToTable("VentaProducto", (string)null);
+                    b.ToTable("VentaProductos", (string)null);
                 });
 
             modelBuilder.Entity("API.Models.Producto", b =>

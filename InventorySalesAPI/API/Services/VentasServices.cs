@@ -1,16 +1,25 @@
 ﻿using API.DTOs;
 using API.Models;
 using API.Repository;
+using System.Text.Json;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 
 namespace API.Services
 {
 	public class VentasServices
 	{
 		private readonly VentasRep _repository;
+		private readonly IConfiguration _configuration;
+		private readonly IAmazonSQS _sqsClient;
+		private readonly ILogger<VentasServices> _logger;
 
-		public VentasServices(VentasRep repository)
+		public VentasServices(VentasRep repository, IConfiguration configuration, IAmazonSQS sqsClient, ILogger<VentasServices> logger)
 		{
 			_repository = repository;
+			_configuration = configuration;
+			_sqsClient = sqsClient;
+			_logger = logger;
 		}
 
 		public async Task<List<VentaResponseDto>> GetAsync()
@@ -23,6 +32,7 @@ namespace API.Services
 				Date = v.Date,
 				TotalAmount = v.TotalAmount,
 				CustomerName = v.CustomerName,
+				CustomerEmail = v.CustomerEmail,
 				Productos = v.VentaProductos.Select(vp => new VentaProductoDto
 				{
 					ProductoId = vp.ProductoId,
@@ -43,6 +53,7 @@ namespace API.Services
 				Date = sale.Date,
 				TotalAmount = sale.TotalAmount,
 				CustomerName = sale.CustomerName,
+				CustomerEmail = sale.CustomerEmail,
 				Productos = sale.VentaProductos.Select(vp => new VentaProductoDto
 				{
 					ProductoId = vp.ProductoId,
@@ -62,6 +73,7 @@ namespace API.Services
 				var venta = new Venta
 				{
 					CustomerName = dto.CustomerName,
+					CustomerEmail = dto.CustomerEmail,
 					Date = DateTime.UtcNow
 				};
 
@@ -108,11 +120,23 @@ namespace API.Services
 
 				if (saved == null) return null;
 
+				// Enviar notificación sin afectar la respuesta si falla
+				try
+				{
+					await EnviarNotificacionVentaAsync(saved);
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error al enviar notificación de venta para VentaId: {VentaId}. Cliente: {CustomerName}", saved.Id, saved.CustomerName);
+					// No relanzamos la excepción para no afectar el éxito de la venta
+				}
+
 				return new VentaResponseDto
 				{
 					Id = saved.Id,
 					Date = saved.Date,
 					TotalAmount = saved.TotalAmount,
+					CustomerEmail = saved.CustomerEmail,
 					CustomerName = saved.CustomerName,
 					Productos = saved.VentaProductos.Select(vp => new VentaProductoDto
 					{
@@ -122,11 +146,49 @@ namespace API.Services
 						PrecioUnitario = vp.PrecioUnitario
 					}).ToList()
 				};
-			}
-			catch
+			}	
+			catch (InvalidOperationException ex)
 			{
+				_logger.LogWarning(ex, "Error de validación al crear venta: {Message}", ex.Message);
 				await transaction.RollbackAsync();
 				throw;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error inesperado al crear venta");
+				await transaction.RollbackAsync();
+				throw;
+			}
+		}
+
+		// Ejemplo de envío a SQS en tu Service Layer
+		public async Task EnviarNotificacionVentaAsync(Venta venta)
+		{
+			var queueUrl = _configuration["AWS:SQS:ColaVentas"] 
+				?? throw new InvalidOperationException("La URL de la cola SQS no está configurada. Verifique appsettings.json o variables de entorno.");
+
+			var mensaje = new
+			{
+				IdVenta = venta.Id,
+				Cliente = venta.CustomerName,
+				Monto = venta.TotalAmount,
+				Email = venta.CustomerEmail ?? "davidariass0519@gmail.com",
+				Detalle = venta.VentaProductos.Select(p => p.Producto.Name).ToList()
+			};
+
+			var request = new SendMessageRequest
+			{
+				QueueUrl = queueUrl,
+				MessageBody = JsonSerializer.Serialize(mensaje)
+			};
+
+			try
+			{
+				await _sqsClient.SendMessageAsync(request);
+			}
+			catch (AmazonSQSException ex)
+			{
+				throw new InvalidOperationException($"Error al enviar mensaje a SQS: {ex.Message}", ex);
 			}
 		}
 	}

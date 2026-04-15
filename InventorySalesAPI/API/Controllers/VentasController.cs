@@ -1,6 +1,7 @@
 ﻿using API.DTOs;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace API.Controllers
@@ -10,10 +11,12 @@ namespace API.Controllers
 	public class VentasController : ControllerBase
 	{
 		private readonly VentasServices _service;
+		private readonly ILogger<VentasController> _logger;
 
-		public VentasController(VentasServices service)
+		public VentasController(VentasServices service, ILogger<VentasController> logger)
 		{
 			_service = service;
+			_logger = logger;
 		}
 
 
@@ -44,7 +47,7 @@ namespace API.Controllers
 				var newVenta = await _service.Create(dto);
 
 				if (newVenta == null)
-					return BadRequest();
+					return BadRequest(new { message = "No se pudo crear la venta" });
 
 				return CreatedAtAction(
 					nameof(GetVentaById),
@@ -54,7 +57,18 @@ namespace API.Controllers
 			}
 			catch (InvalidOperationException ex)
 			{
+				_logger.LogWarning(ex, "Error de validación en CreateVenta: {Message}", ex.Message);
 				return Conflict(new { message = ex.Message });
+			}
+			catch (DbUpdateException ex)
+			{
+				_logger.LogError(ex, "Error de base de datos en CreateVenta");
+				return StatusCode(500, new { message = "Error al guardar la venta en la base de datos" });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error inesperado en CreateVenta");
+				return StatusCode(500, new { message = "Error interno del servidor" });
 			}
 		}
 	}
