@@ -1,32 +1,22 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM node:20-alpine
+
 WORKDIR /app
-EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+# Instalar dependencias primero para cache de capas
+COPY package*.json ./
+RUN npm install --production
 
-# Copiar todo
+# Copiar el código fuente
 COPY . .
 
-# Ir a la carpeta del proyecto
-WORKDIR /src/API
+# Exponer el puerto configurado en docker-compose (8080)
+EXPOSE 8080
 
-# Restaurar y publicar
-RUN dotnet restore
-RUN dotnet publish -c Release -o /app/publish
+ENV PORT=8080
+ENV NODE_ENV=production
 
-FROM base AS final
-WORKDIR /app
+# Healthcheck para contenedor
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# Copiar lo publicado
-COPY --from=build /app/publish .
-
-# ✅ Mejor práctica: Permitir que ECS/CloudFormation sobreescriba esto
-# No hardcodees ASPNETCORE_URLS aquí si no es necesario
-# ECS puede manejar esto automáticamente
-
-# Opcional: Healthcheck para que ECS sepa si tu app está viva
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
-ENTRYPOINT ["dotnet", "API.dll"]
+CMD ["node", "src/server.js"]

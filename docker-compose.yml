@@ -22,7 +22,7 @@ services:
 
   api:
     build: ./InventorySalesAPI
-    container_name: dotnet_api
+    container_name: express_api
     ports:
       - "5000:8080"
     depends_on:
@@ -30,6 +30,12 @@ services:
         condition: service_healthy
     environment:
       - ConnectionStrings__DefaultConnection=Server=db;Database=InventorySales;Uid=root;Pwd=Unicesar+2026;
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=Unicesar+2026
+      - DB_NAME=InventorySales
+      - PORT=8080
     networks:
       - app-network
 

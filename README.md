@@ -4,11 +4,11 @@ Sistema básico de **gestión de ventas e inventario, desarrollado como práctic
 
 
 ## El proyecto incluye:
-* API REST desarrollada en Microsoft .NET 8
-* ORM con Entity Framework Core 9
+* API REST desarrollada en Node.js y Express
+* Base de datos MySQL
+* Pruebas unitarias con Jest
 * Frontend en React + Vite
 * Estilos con Bootstrap
-* Base de datos SQL Server 2022
 * Orquestación con Docker Compose
 
 ## 🚀 Cómo ejecutar el proyecto
@@ -20,20 +20,9 @@ git clone <url-del-proyecto>
 ```bash
 cd Inventory_Sales
 ```
-3️⃣ Construir, levantar los contenedores y cargar los datos de prueba
+3️⃣ Levantar los contenedores
 ```bash
-.\Inicializador.ps1
-```
-Este script hará lo siguiente:
-* Descargará las imagenes docker
-* Creará Contenedores (sqlServer, dotnet_api, InventorySalesfrontend)
-* Insertar datos de ejemplo para Categorías
-* Insertar datos de ejemplo para Productos
-* Insertar datos de ejemplo para Ventas
-
-🧪 Para levantar los contenedores
-```bash
-docker compose up
+docker compose up --build
 ```
 
 ## Probar la aplicación
@@ -46,4 +35,16 @@ localhost:5000/swagger/index.html
 ### Frontend
 ```bash
 localhost:5173/
+```
+
+## 🧪 Pruebas Unitarias (Jest)
+Para ejecutar la suite de pruebas unitarias del backend:
+```bash
+cd InventorySalesAPI
+npm install
+npm test
+```
+O con el runner integrado:
+```bash
+node tests/runTests.js
 ```
