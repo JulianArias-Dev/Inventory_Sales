@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { categoriaService } from '../services/categoriesService';
 import { productService } from '../services/productService';
+import { validarCategoria } from '../validations/categoryValidation.js';
 import '../styles/categories.css';
 
 // Categories page
@@ -95,6 +96,11 @@ const Categories = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!validarCategoria(formData.nombre)) {
+      setError('El nombre de la categoría es obligatorio');
+      return;
+    }
 
     try {
       if (modalType === 'crear') {
