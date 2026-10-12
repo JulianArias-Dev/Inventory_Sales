@@ -67,6 +67,17 @@ function expect(actual) {
     toBe: (expected) => {
       assert.strictEqual(actual, expected);
     },
+    not: {
+      toBe: (expected) => {
+        assert.notStrictEqual(actual, expected);
+      },
+      toEqual: (expected) => {
+        assert.notDeepStrictEqual(actual, expected);
+      },
+      toHaveBeenCalled: () => {
+        assert.strictEqual(actual.mock.calls.length, 0, 'Expected function not to have been called');
+      }
+    },
     toBeNull: () => {
       assert.strictEqual(actual, null);
     },
@@ -160,6 +171,10 @@ const jestMock = {
       return currentImpl.apply(this, args);
     };
     fn.mock = { calls: [] };
+    fn.mockReturnValue = (val) => {
+      currentImpl = () => val;
+      return fn;
+    };
     fn.mockResolvedValue = (val) => {
       currentImpl = () => Promise.resolve(val);
       return fn;
@@ -264,6 +279,10 @@ async function run() {
   require('./report.test.js');
   require('./sqsService.test.js');
   require('./controllers.test.js');
+  require('./authService.test.js');
+  require('./authController.test.js');
+  require('./authRoutes.test.js');
+  require('./initDb.test.js');
 
   const { passed, failed, failures } = await executeSuite(rootSuite);
 

@@ -1,10 +1,12 @@
+import { apiRequest } from './apiClient';
+
 const API_URL = '/api'; // Mismo puerto que categorías
 
 export const productService = {
   // Obtener todos los productos
   async getAll() {
     try {
-      const response = await fetch(`${API_URL}/Producto`);
+      const response = await apiRequest(`${API_URL}/Producto`);
       if (!response.ok) throw new Error('Error al cargar los productos');
       const data = await response.json();
       console.log('Productos desde backend:', data); // Para depurar
@@ -18,7 +20,7 @@ export const productService = {
   // Obtener producto por ID
   async getById(id) {
     try {
-      const response = await fetch(`${API_URL}/Producto/${id}`);
+      const response = await apiRequest(`${API_URL}/Producto/${id}`);
       if (!response.ok) {
         if (response.status === 404) throw new Error('Producto no encontrado');
         throw new Error('Error al cargar el producto');
@@ -33,7 +35,7 @@ export const productService = {
   // Crear nuevo producto
   async create(productoData) {
     try {
-      const response = await fetch(`${API_URL}/Producto`, {
+      const response = await apiRequest(`${API_URL}/Producto`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +72,7 @@ export const productService = {
   // Actualizar producto
   async update(id, productoData) {
     try {
-      const response = await fetch(`${API_URL}/Producto/${id}`, {
+      const response = await apiRequest(`${API_URL}/Producto/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +106,7 @@ export const productService = {
   // Eliminar producto
   async delete(id) {
     try {
-      const response = await fetch(`${API_URL}/Producto/${id}`, {
+      const response = await apiRequest(`${API_URL}/Producto/${id}`, {
         method: 'DELETE'
       });
 

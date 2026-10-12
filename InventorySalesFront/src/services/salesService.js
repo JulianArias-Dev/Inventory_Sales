@@ -1,10 +1,12 @@
+import { apiRequest } from './apiClient';
+
 const API_URL = '/api';
 
 const salesService = {
     // Obtener todas las ventas
     getVentas: async () => {
         try {
-            const response = await fetch(`${API_URL}/Ventas`);
+            const response = await apiRequest(`${API_URL}/Ventas`);
             if (!response.ok) throw new Error('Error al cargar las ventas');
             return await response.json();
         } catch (error) {
@@ -17,7 +19,7 @@ const salesService = {
     getVentaById: async (id) => {
         try {
             console.log('Obteniendo venta ID:', id);
-            const response = await fetch(`${API_URL}/Ventas/${id}`);
+            const response = await apiRequest(`${API_URL}/Ventas/${id}`);
 
             const responseText = await response.text();
             console.log('Respuesta del servidor:', responseText);
@@ -55,7 +57,7 @@ const salesService = {
 
             console.log('Enviando al backend:', JSON.stringify(dataToSend, null, 2));
 
-            const response = await fetch(`${API_URL}/Ventas`, {
+            const response = await apiRequest(`${API_URL}/Ventas`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

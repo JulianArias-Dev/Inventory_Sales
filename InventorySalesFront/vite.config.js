@@ -7,5 +7,11 @@ export default defineConfig({
   server: {
     host: true,        // Permite acceso externo
     port: 5173,        // Opcional pero recomendado
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   }
 })

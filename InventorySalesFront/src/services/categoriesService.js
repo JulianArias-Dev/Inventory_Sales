@@ -1,10 +1,12 @@
+import { apiRequest } from './apiClient';
+
 const API_URL = '/api'; // Ajusta el puerto según tu backend
 
 export const categoriaService = {
   // Obtener todas las categorías
   async getAll() {
     try {
-      const response = await fetch(`${API_URL}/Categoria`);
+      const response = await apiRequest(`${API_URL}/Categoria`);
       if (!response.ok) throw new Error('Error al cargar las categorías');
       return await response.json();
     } catch (error) {
@@ -16,7 +18,7 @@ export const categoriaService = {
   // Obtener categoría por ID
   async getById(id) {
     try {
-      const response = await fetch(`${API_URL}/Categoria/${id}`);
+      const response = await apiRequest(`${API_URL}/Categoria/${id}`);
       if (!response.ok) {
         if (response.status === 404) throw new Error('Categoría no encontrada');
         throw new Error('Error al cargar la categoría');
@@ -31,7 +33,7 @@ export const categoriaService = {
   // Crear nueva categoría
   async create(categoriaData) {
     try {
-      const response = await fetch(`${API_URL}/Categoria`, {
+      const response = await apiRequest(`${API_URL}/Categoria`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +59,7 @@ export const categoriaService = {
   // Actualizar categoría
   async update(id, categoriaData) {
     try {
-      const response = await fetch(`${API_URL}/Categoria/${id}`, {
+      const response = await apiRequest(`${API_URL}/Categoria/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +89,7 @@ export const categoriaService = {
   // Eliminar categoría
   async delete(id) {
     try {
-      const response = await fetch(`${API_URL}/Categoria/${id}`, {
+      const response = await apiRequest(`${API_URL}/Categoria/${id}`, {
         method: 'DELETE'
       });
 
@@ -112,7 +114,7 @@ export const categoriaService = {
   async tieneProductos(id) {
     try {
       // Si el backend tiene un endpoint para verificar productos
-      const response = await fetch(`${API_URL}/Categoria/${id}/tiene-productos`);
+      const response = await apiRequest(`${API_URL}/Categoria/${id}/tiene-productos`);
       if (!response.ok) return false;
       return await response.json();
     } catch (error) {
