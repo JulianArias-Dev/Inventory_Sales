@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { productService } from '../services/productService';
 import { categoriaService } from '../services/categoriesService';
+import { validarProducto } from '../validations/productValidation.js';
 import '../styles/products.css';
 
 // Products page
@@ -155,6 +156,16 @@ const Products = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!validarProducto(
+      formData.name,
+      formData.price,
+      formData.stock,
+      formData.categoria
+    )) {
+      setError('Verifica el nombre, el precio, el stock y la categoría del producto');
+      return;
+    }
 
     try {
       if (modalType === 'crear') {
