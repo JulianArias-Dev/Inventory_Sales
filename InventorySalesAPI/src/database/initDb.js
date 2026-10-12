@@ -1,8 +1,9 @@
 const db = require('../config/db');
+const authService = require('../services/authService');
 
-async function initializeDatabase() {
-  const maxRetries = 15;
-  const retryIntervalMs = 3000;
+async function initializeDatabase(options = {}) {
+  const maxRetries = options.maxRetries || 15;
+  const retryIntervalMs = options.retryIntervalMs || 3000;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -52,6 +53,15 @@ async function initializeDatabase() {
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
 
+        await conn.query(`
+          CREATE TABLE IF NOT EXISTS Usuarios (
+            Id INT AUTO_INCREMENT PRIMARY KEY,
+            Username VARCHAR(100) NOT NULL UNIQUE,
+            Password VARCHAR(255) NOT NULL,
+            Role VARCHAR(50) NOT NULL DEFAULT 'Admin'
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
         // Check if seeding is needed for Categorias
         const [catCount] = await conn.query('SELECT COUNT(*) as count FROM Categorias');
         if ((catCount[0]?.count || 0) === 0) {
@@ -74,6 +84,21 @@ async function initializeDatabase() {
             (3, 'Tennis Nike', 220000, 50, 2),
             (4, 'Tennis Adidas', 225000, 50, 2)
           `);
+        }
+
+        // Check if seeding is needed for Admin user
+        const [adminCount] = await conn.query(
+          'SELECT COUNT(*) as count FROM Usuarios WHERE LOWER(TRIM(Username)) = ?',
+          ['admin']
+        );
+        if ((adminCount[0]?.count || 0) === 0) {
+          console.log('[DB] Creando usuario Admin inicial...');
+          const hashedPassword = await authService.hashPassword('Admin123!');
+          await conn.query(
+            'INSERT INTO Usuarios (Username, Password, Role) VALUES (?, ?, ?)',
+            ['Admin', hashedPassword, 'Admin']
+          );
+          console.log('[DB] Usuario Admin creado correctamente.');
         }
 
         console.log('[DB] Base de datos inicializada correctamente.');

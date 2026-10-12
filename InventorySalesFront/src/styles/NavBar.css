@@ -121,16 +121,64 @@
 .user-info {
   display: flex;
   align-items: center;
-  padding: 0.75rem 0.5rem;
+  padding: 0.65rem 0.75rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.95rem;
+  gap: 0.5rem;
 }
 
 .user-info i {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: #90cdf4;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #90cdf4;
+}
+
+.btn-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 0.5rem;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.85);
+  color: #ffffff;
+  border-color: rgba(239, 68, 68, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-logout i {
+  font-size: 1.05rem;
 }
 
 /* Animaciones */
@@ -204,7 +252,22 @@
   }
   
   .navbar-footer {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.5rem 0;
+    margin-top: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .navbar-footer .user-info {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .navbar-footer .btn-logout {
+    margin-top: 0;
+    width: auto;
+    padding: 0.4rem 0.75rem;
   }
   
   .navbar-brand {

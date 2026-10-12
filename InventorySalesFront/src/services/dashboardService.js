@@ -1,10 +1,12 @@
+import { apiRequest } from './apiClient';
+
 const API_URL = '/api';
 
 const dashboardService = {
     // Obtener resumen para las cards (KPI)
     getSummary: async () => {
         try {
-            const response = await fetch(`${API_URL}/Reporte/summary`);
+            const response = await apiRequest(`${API_URL}/Reporte/summary`);
             if (!response.ok) throw new Error('Error al cargar el resumen');
             return await response.json();
         } catch (error) {
@@ -16,7 +18,7 @@ const dashboardService = {
     // Obtener ventas por día para el gráfico de línea
     getVentasPorDia: async () => {
         try {
-            const response = await fetch(`${API_URL}/Reporte/ventas-por-dia`);
+            const response = await apiRequest(`${API_URL}/Reporte/ventas-por-dia`);
             if (!response.ok) throw new Error('Error al cargar ventas por día');
             return await response.json();
         } catch (error) {
@@ -28,7 +30,7 @@ const dashboardService = {
     // Obtener productos top
     getProductosTop: async (top = 5) => {
         try {
-            const response = await fetch(`${API_URL}/Reporte/productos-top/${top}`);
+            const response = await apiRequest(`${API_URL}/Reporte/productos-top/${top}`);
             if (!response.ok) throw new Error('Error al cargar productos top');
             return await response.json();
         } catch (error) {
@@ -40,7 +42,7 @@ const dashboardService = {
     // Obtener ventas por categoría
     getVentasPorCategoria: async () => {
         try {
-            const response = await fetch(`${API_URL}/Reporte/ventas-por-categoria`);
+            const response = await apiRequest(`${API_URL}/Reporte/ventas-por-categoria`);
             if (!response.ok) throw new Error('Error al cargar ventas por categoría');
             return await response.json();
         } catch (error) {
