@@ -3,6 +3,8 @@ import { categoriaService } from '../services/categoriesService';
 import { productService } from '../services/productService';
 import '../styles/categories.css';
 
+// Categories page
+
 const Categories = () => {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);

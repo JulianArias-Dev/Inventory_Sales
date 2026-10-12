@@ -7,6 +7,8 @@ import SalesDetailsModal from '../components/modals/SaleDetailsModal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/sales.css';
 
+// Sales Page
+
 const Sales = () => {
     const [ventas, setVentas] = useState([]);
     const [loading, setLoading] = useState(true);

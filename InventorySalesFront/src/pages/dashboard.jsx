@@ -5,6 +5,8 @@ import { LineChart, ColumnChart, BarChart } from '../components/charts';
 import dashboardService from '../services/dashboardService';
 import '../styles/dashboard.css';
 
+//Dashboard page
+
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
