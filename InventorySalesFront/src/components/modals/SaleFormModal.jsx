@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { productService } from '../../services/productService';
 import salesService from '../../services/salesService';
 import SaleConfirmModal from './SaleConfirmModal';
+import {
+    validarNombreCliente,
+    validarEmailCliente,
+    validarProductosVenta,
+    validarCantidadProducto
+} from '../../validations/saleValidation.js';
 import '../../styles/salesDetailsModal.css';
 
 const SaleFormModal = ({ onClose, onSuccess }) => {
@@ -101,15 +107,27 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
             setError('Seleccione un producto');
             return;
         }
+        
+        const productoEnStock = productos.find(
+            p => p.id === nuevoProducto.productId
+        );
 
-        if (nuevoProducto.cantidad < 1) {
-            setError('La cantidad debe ser mayor a 0');
+        if (!productoEnStock) {
+            setError('Seleccione un producto válido');
             return;
         }
 
-        const productoEnStock = productos.find(p => p.id === nuevoProducto.productId);
-        if (productoEnStock && productoEnStock.stock < nuevoProducto.cantidad) {
-            setError(`Stock insuficiente. Stock disponible: ${productoEnStock.stock}`);
+        if (!validarCantidadProducto(
+            nuevoProducto.cantidad,
+            productoEnStock.stock
+        )) {
+            if (nuevoProducto.cantidad < 1) {
+                setError('La cantidad debe ser mayor a 0');
+            } else {
+                setError(
+                    `Stock insuficiente. Stock disponible: ${productoEnStock.stock}`
+                );
+            }
             return;
         }
 
@@ -117,8 +135,13 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
 
         if (productoExistente) {
             const nuevaCantidad = productoExistente.cantidad + nuevoProducto.cantidad;
-            if (productoEnStock && productoEnStock.stock < nuevaCantidad) {
-                setError(`Stock insuficiente. Stock disponible: ${productoEnStock.stock}`);
+            if (!validarCantidadProducto(
+                nuevaCantidad,
+                productoEnStock.stock
+            )) {
+                setError(
+                    `Stock insuficiente. Stock disponible: ${productoEnStock.stock}`
+                );
                 return;
             }
 
@@ -175,24 +198,21 @@ const SaleFormModal = ({ onClose, onSuccess }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.customerName.trim()) {
+        if (!validarNombreCliente(formData.customerName)) {
             setError('Ingrese el nombre del cliente');
             return;
         }
 
-        if (!formData.customerEmail.trim()) {
-            setError('Ingrese el email del cliente');
+        if (!validarEmailCliente(formData.customerEmail)) {
+            setError(
+                formData.customerEmail.trim() === ''
+                    ? 'Ingrese el email del cliente'
+                    : 'Ingrese un email válido'
+            );
             return;
         }
 
-        // Validar formato de email básico
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.customerEmail.trim())) {
-            setError('Ingrese un email válido');
-            return;
-        }
-
-        if (formData.productos.length === 0) {
+        if (!validarProductosVenta(formData.productos)) {
             setError('Agregue al menos un producto');
             return;
         }
