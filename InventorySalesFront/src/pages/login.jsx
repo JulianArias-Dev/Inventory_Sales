@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { validarLogin } from '../validations/loginValidation.js';
 import '../styles/login.css';
 
 const LoginPage = () => {
@@ -27,7 +28,7 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!username.trim() || !password) {
+    if (!validarLogin(username, password)) {
       setError('Por favor ingresa usuario y contraseña');
       return;
     }
